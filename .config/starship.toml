@@ -1,0 +1,31 @@
+format = """
+$username\
+$hostname\
+$shlvl\
+$directory\
+$git_branch\
+$git_status\
+$cmd_duration\
+$line_break\
+$time\
+$status\
+$character"""
+
+[hostname]
+ssh_only = false
+format = "[$hostname]($style) "
+
+[username]
+show_always = true
+format = "[$user]($style)@"
+
+[directory]
+truncation_length = 10
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+
+[time]
+disabled = false
+format = "[$time]($style) "
+
