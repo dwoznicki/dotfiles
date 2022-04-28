@@ -417,7 +417,7 @@ if not is_module_available("nvim-treesitter") then
     return
 end
 require("nvim-treesitter.configs").setup({
-    ensure_installed = "maintained",
+    ensure_installed = "all",
     highlight = {
         enable = true,
     },
