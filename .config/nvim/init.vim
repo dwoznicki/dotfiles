@@ -22,13 +22,14 @@ Plug 'JoosepAlviste/nvim-ts-context-commentstring'
 Plug 'terrortylor/nvim-comment'
 Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'danymat/neogen'
 call plug#end()
 
 " -----------------------------------------------------------------------------
 " My settings
 
-" Remap leader key to ','.
-" let g:mapleader=','
+" Set leader key to '\'.
+let g:mapleader='\'
 
 " Enable filetype detection.
 filetype plugin indent on
@@ -89,14 +90,18 @@ vnoremap <C-Space> 10k
 nnoremap j gj
 nnoremap k gk
 
-" Set default text width. This affects autoformatting.
-autocmd BufNewFile,BufRead *.js,*.jsx,*.java,*.css,*.scss,*.sh,*.rb,*.rs,*.vim,*.lua setlocal textwidth=100
-" Don't automatically format single line comments. Options are as follows:
-" - c: Auto-wrap comments using text width. If enabled, while typing a
-"   comment that gets too long, will automatically start new line.
-" - r: Automatically insert comment token after pressing <Enter> in Insert mode.
-" - o: Automatically insert comment token after pressing 'o' or 'O' in Normal mode.
-autocmd BufNewFile,BufRead * setlocal formatoptions-=ro
+
+" Format options here affect code comments. See :h fo-table for more details.
+" Set default text width. Vim will automatically start a new line when comment text goes above this
+" number. Note that we specify file extensions here because we don't want this behavior in every
+" file (e.g. .txt or .md files).
+autocmd BufNewFile,BufRead *.js,*.jsx,*.ts,*.tsx,*.java,*.css,*.scss,*.sh,*.rb,*.rs,*.vim,*.lua setlocal textwidth=100
+" Don't automatically format single line comments. Vim will automatically add the comment token to
+" your newline if the previous line started with a comment token. This can be annoying when you want
+" to write a single comment line then go back to writing code.
+autocmd BufNewFile,BufRead * setlocal formatoptions-=ro formatoptions+=p
+" autocmd FileType java,javascript,javascriptreact,typescript,typescriptreact setlocal comments-=:// comments+=f://
+" Don't auto-wrap text in gitcommits. Typically, I don't want any special actions for git commits.
 autocmd FileType gitcommit setlocal formatoptions-=tl
 
 " Press ESC to enter normal mode in terminal mode. Terminal mode can be accessed by running :term
@@ -116,6 +121,39 @@ colorscheme onedark
 lua <<EOF
 local ls = require("luasnip")
 local fmt = require("luasnip.extras.fmt").fmt
+
+ls.config.setup({
+    region_check_events = "CursorMoved",
+    delete_check_events = "TextChanged",
+})
+
+-- vim.api.nvim_set_keymap("s", "nn", "<cmd>lua require('luasnip').jump(1)<CR>", {noremap = true, silent = true})
+-- vim.api.nvim_set_keymap("n", "nn", "<cmd>lua require('luasnip').jump(1)<CR>", {noremap = true, silent = true})
+local replace_termcodes = function(str)
+    return vim.api.nvim_replace_termcodes(str, true, true, true)
+end
+
+_G.luasnip_jump_next = function()
+    if ls.jumpable(1) then
+        return replace_termcodes("<Plug>luasnip-jump-next")
+    else
+        return replace_termcodes("<C-j>")
+    end
+end
+
+_G.luasnip_jump_prev = function()
+    if ls.jumpable(-1) then
+        return replace_termcodes("<Plug>luasnip-jump-prev")
+    else
+        return replace_termcodes("<C-k>")
+    end
+end
+
+vim.api.nvim_set_keymap("s", "<C-j>", "v:lua.luasnip_jump_next()", {expr = true})
+vim.api.nvim_set_keymap("i", "<C-j>", "v:lua.luasnip_jump_next()", {expr = true})
+vim.api.nvim_set_keymap("s", "<C-k>", "v:lua.luasnip_jump_prev()", {expr = true})
+vim.api.nvim_set_keymap("i", "<C-k>", "v:lua.luasnip_jump_prev()", {expr = true})
+
 ls.add_snippets("typescriptreact", {
     ls.snippet(
         {trig = "heading", name = "heading JSX"},
@@ -178,6 +216,15 @@ ls.add_snippets("typescriptreact", {
 EOF
 
 " -----------------------------------------------------------------------------
+" neogen
+lua <<EOF
+require("neogen").setup({snippet_engine = "luasnip"})
+
+vim.api.nvim_set_keymap("n", "<Leader>dc", ":lua require('neogen').generate({type = 'class'})<CR>", {noremap = true, silent = true})
+vim.api.nvim_set_keymap("n", "<Leader>df", ":lua require('neogen').generate({type = 'func'})<CR>", {noremap = true, silent = true})
+EOF
+
+" -----------------------------------------------------------------------------
 " nvim-cmp
 " These settings are partially derived from here:
 " https://github.com/hrsh7th/nvim-cmp/wiki/Example-mappings#no-snippet-plugin
@@ -209,7 +256,7 @@ cmp.setup({
             else
                 fallback()
             end
-        end, {"i", "c"}),
+        end, {"i"}),
         ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_prev_item()
@@ -218,7 +265,7 @@ cmp.setup({
             else
                 fallback()
             end
-        end, {"i", "c"}),
+        end, {"i"}),
         ["<C-b>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), {"i", "c"}),
         ["<C-f>"] = cmp.mapping(cmp.mapping.scroll_docs(4), {"i", "c"}),
     },
@@ -276,6 +323,14 @@ lspconfig.efm.setup({
 
 lspconfig.tsserver.setup({
     filetypes = {"typescript", "typescriptreact", "typescript.jsx"},
+    settings = {
+        diagnostics = {
+            -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+            ignoredCodes = {
+                80006,
+            },
+        },
+    },
 })
 
 lspconfig.jdtls.setup({
