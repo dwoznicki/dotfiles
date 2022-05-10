@@ -246,6 +246,9 @@ EOF
 " -----------------------------------------------------------------------------
 " neogen
 lua <<EOF
+if not is_module_available("neogen") then
+    return
+end
 require("neogen").setup({snippet_engine = "luasnip"})
 
 vim.api.nvim_set_keymap("n", "<Leader>dc", ":lua require('neogen').generate({type = 'class'})<CR>", {noremap = true, silent = true})

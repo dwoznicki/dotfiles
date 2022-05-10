@@ -130,3 +130,11 @@ export JDTLS_HOME=$HOME/.local/lib/jdt-language-server-1.3.0 # Directory with th
 # Run Starship command line prompt
 # https://starship.rs/
 eval "$(starship init bash)"
+
+# Add `go` to path.
+export PATH="/usr/local/go/bin:${PATH}"
+
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
