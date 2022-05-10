@@ -114,11 +114,39 @@ nnoremap \se <cmd>%s/\(\S\) \(}\\|\]\)/\1\2/gc<cr>
 " Coloring
 " set background=dark
 " set termguicolors
-colorscheme onedark
+try
+    colorscheme onedark
+catch /^Vim\%((\a\+)\)\=:E185/
+    " Just use the default then
+endtry
+
+" -----------------------------------------------------------------------------
+" General Lua helpers
+lua <<EOF
+function is_module_available(name)
+    if package.loaded[name] then
+        return true
+    else
+        for _, searcher in ipairs(package.searchers or package.loaders) do
+            local loader = searcher(name)
+            if type(loader) == 'function' then
+                package.preload[name] = loader
+                return true
+            end
+        end
+        return false
+    end
+end
+_G.is_module_available = is_module_available
+EOF
+
 
 " -----------------------------------------------------------------------------
 " luasnip
 lua <<EOF
+if not is_module_available("luasnip") then
+    return
+end
 local ls = require("luasnip")
 local fmt = require("luasnip.extras.fmt").fmt
 
@@ -236,6 +264,9 @@ local has_words_before = function()
     local line, col = unpack(vim.api.nvim_win_get_cursor(0))
     return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match('%s') == nil
 end
+if not is_module_available("luasnip") or not is_module_available("cmp") then
+    return
+end
 local luasnip = require("luasnip")
 local cmp = require("cmp")
 cmp.setup({
@@ -295,6 +326,9 @@ autocmd FileType TelescopePrompt lua require("cmp").setup.buffer({completion = {
 " -----------------------------------------------------------------------------
 " nvim-lspconfig
 lua <<EOF
+if not is_module_available("lspconfig") then
+    return
+end
 local lspconfig = require("lspconfig")
 local util = lspconfig.util
 
@@ -369,6 +403,9 @@ nnoremap K <cmd>lua vim.lsp.buf.hover()<cr>
 " -----------------------------------------------------------------------------
 " nvim-telescope
 lua <<EOF
+if not is_module_available("nvim-web-devicons") or not is_module_available("telescope") then
+    return
+end
 require("nvim-web-devicons").setup({
   default = true
 })
@@ -409,6 +446,9 @@ nnoremap <C-y> <cmd>Telescope pickers<cr>
 " nvim-trouble
 " lua require('init_trouble')
 lua <<EOF
+if not is_module_available("trouble") then
+    return
+end
 require("trouble").setup({
     action_keys = {
         close = "<esc>"
@@ -428,8 +468,11 @@ lua require("lualine").setup({options = {theme = "onedark"}})
 " -----------------------------------------------------------------------------
 " nvim-treesitter
 lua <<EOF
+if not is_module_available("nvim-treesitter") then
+    return
+end
 require("nvim-treesitter.configs").setup({
-    ensure_installed = "maintained",
+    ensure_installed = "all",
     highlight = {
         enable = true,
     },
@@ -464,6 +507,9 @@ EOF
 " nvim-comment
 
 lua <<EOF
+if not is_module_available("nvim_comment") then
+    return
+end
 require("nvim_comment").setup({
     operator_mapping = "f",
     hook = function()
