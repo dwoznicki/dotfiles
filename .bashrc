@@ -116,6 +116,9 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# Change CAPS to ESC
+setxkbmap -option "caps:escape"
+
 # Increse node memory limit
 NODE_OPTIONS="--max-old-space-size=8192"
 
