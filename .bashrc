@@ -116,6 +116,9 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# Use nvim as our default editor
+export EDITOR="nvim"
+
 # Change CAPS to ESC
 setxkbmap -option "caps:escape"
 
@@ -136,7 +139,6 @@ eval "$(starship init bash)"
 
 # Add `go` to path.
 export PATH="/usr/local/go/bin:${PATH}"
-
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

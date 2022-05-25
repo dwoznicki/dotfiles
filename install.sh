@@ -23,3 +23,10 @@ if [ $? -ne 0 ]; then
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 fi
 
+# Install vim-plug, a vim package manager.
+# https://github.com/junegunn/vim-plug
+if [ ! -f "~/.local/share/nvim/site/autoload/plug.vim" ]; then
+    sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+fi
+

@@ -466,7 +466,12 @@ nnoremap gr <cmd>TroubleToggle lsp_references<cr>
 
 " -----------------------------------------------------------------------------
 " lualine
-lua require("lualine").setup({options = {theme = "onedark"}})
+lua <<EOF
+if not is_module_available("lualine") then
+    return
+end
+require("lualine").setup({options = {theme = "onedark"}})
+EOF
 
 " -----------------------------------------------------------------------------
 " nvim-treesitter
