@@ -16,6 +16,7 @@ Plug 'folke/trouble.nvim'
 Plug 'hoob3rt/lualine.nvim'
 Plug 'airblade/vim-rooter'
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}  " We recommend updating the parsers on update
+Plug 'nvim-treesitter/nvim-treesitter-refactor'
 Plug 'nvim-treesitter/playground'
 Plug 'neoclide/vim-jsx-improve'
 Plug 'JoosepAlviste/nvim-ts-context-commentstring'
@@ -23,6 +24,7 @@ Plug 'terrortylor/nvim-comment'
 Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'danymat/neogen'
+Plug 'AndrewRadev/splitjoin.vim'
 call plug#end()
 
 " -----------------------------------------------------------------------------
@@ -95,7 +97,7 @@ nnoremap k gk
 " Set default text width. Vim will automatically start a new line when comment text goes above this
 " number. Note that we specify file extensions here because we don't want this behavior in every
 " file (e.g. .txt or .md files).
-autocmd BufNewFile,BufRead *.js,*.jsx,*.ts,*.tsx,*.java,*.css,*.scss,*.sh,*.rb,*.rs,*.vim,*.lua setlocal textwidth=100
+autocmd BufNewFile,BufRead *.js,*.jsx,*.ts,*.tsx,*.java,*.css,*.scss,*.rb,*.rs,*.vim,*.lua setlocal textwidth=100
 " Don't automatically format single line comments. Vim will automatically add the comment token to
 " your newline if the previous line started with a comment token. This can be annoying when you want
 " to write a single comment line then go back to writing code.
@@ -398,7 +400,7 @@ EOF
 
 nnoremap <C-n> <cmd>lua vim.diagnostic.goto_next({popup_opts = {focusable = false}})<cr>
 nnoremap <C-b> <cmd>lua vim.diagnostic.goto_prev({popup_opts = {focusable = false}})<cr>
-nnoremap gD <cmd>lua vim.lsp.buf.declaration()<cr>
+" nnoremap gD <cmd>lua vim.lsp.buf.declaration()<cr>
 nnoremap gd <cmd>lua vim.lsp.buf.definition()<cr>
 nnoremap K <cmd>lua vim.lsp.buf.hover()<cr>
 " nnoremap gr <cmd>lua vim.lsp.buf.references()<cr>
@@ -487,6 +489,7 @@ require("nvim-treesitter.configs").setup({
     indent = {
         enable = true,
         -- disable = { "javascriptreact", "javascript", "jsx" },
+        disable = { "ruby" },
     },
     context_commentstring = {
         enable = true,
@@ -496,6 +499,22 @@ require("nvim-treesitter.configs").setup({
     },
     playground = {
         enable = true,
+    },
+    refactor = {
+        enable = true,
+        smart_rename = {
+            enable = true,
+            keymaps = {
+                smart_rename = "gR"
+            },
+        },
+        navigation = {
+            enable = true,
+            keymaps = {
+                goto_next_usage = "<c-]>",
+                goto_previous_usage = "<c-[>",
+            },
+        },
     },
 })
 EOF
@@ -531,4 +550,16 @@ nnoremap <silent> ff :CommentToggle<cr>
 " fp: toggle comment for current paragraph.
 nnoremap <silent> fp vip:CommentToggle<cr>
 " nnoremap <silent> fp mtgcip`t
+
+" -----------------------------------------------------------------------------
+" splitjoin.vim
+" Don't add space padding around curly braces when joining.
+let g:splitjoin_curly_brace_padding = 0
+" Add trailing comma to each line when splitting.
+let g:splitjoin_trailing_comma = 1
+
+" sj: split a single line into multiple lines.
+nmap sj :SplitjoinSplit<cr>
+" sk: join multiple lines into a single line (cursor must be on the original line).
+nmap sk :SplitjoinJoin<cr>
 
