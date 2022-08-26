@@ -3,10 +3,11 @@
 # - fd-find: find alternative
 # - xclip: access the system clipboard from the command line
 # - curl: standard network tool
+# - flameshot: a better screenshot program
 apt --version
 if [ $? -eq 0 ]; then
     echo "Found \`apt\` binary. Installing some utilities with \`apt\`."
-    sudo apt install ripgrep fd-find xclip curl
+    sudo apt install ripgrep fd-find xclip curl flameshot
 fi
 
 # Insall Starship.rs, which provides a nice command line prompt.
