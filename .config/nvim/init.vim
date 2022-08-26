@@ -511,8 +511,8 @@ require("nvim-treesitter.configs").setup({
         navigation = {
             enable = true,
             keymaps = {
-                goto_next_usage = "<c-]>",
-                goto_previous_usage = "<c-[>",
+                goto_next_usage = "<s-n>",
+                goto_previous_usage = "<s-b>",
             },
         },
     },
