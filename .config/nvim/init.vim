@@ -90,6 +90,9 @@ vnoremap <C-Space> 10k
 nnoremap j gj
 nnoremap k gk
 
+" Fix various comment strings.
+autocmd FileType cpp setlocal commentstring=//%s
+autocmd FileType sql setlocal commentstring=--%s
 
 " Format options here affect code comments. See :h fo-table for more details.
 " Set default text width. Vim will automatically start a new line when comment text goes above this
@@ -102,7 +105,7 @@ autocmd BufNewFile,BufRead *.js,*.jsx,*.ts,*.tsx,*.java,*.css,*.scss,*.sh,*.rb,*
 autocmd BufNewFile,BufRead * setlocal formatoptions-=ro formatoptions+=p
 " autocmd FileType java,javascript,javascriptreact,typescript,typescriptreact setlocal comments-=:// comments+=f://
 " Don't auto-wrap text in gitcommits. Typically, I don't want any special actions for git commits.
-autocmd FileType gitcommit setlocal formatoptions-=tl
+autocmd FileType gitcommit,sh setlocal formatoptions-=t formatoptions-=l
 
 " Press ESC to enter normal mode in terminal mode. Terminal mode can be accessed by running :term
 tnoremap <Esc> <C-\><C-n>
@@ -441,7 +444,7 @@ let g:rooter_manual_only = 1
 let g:rooter_patterns = [ '.git', '.svn', '.bashrc', '.bash_profile' ]
 nnoremap <expr> <C-p> ':Telescope find_files cwd=' . FindRootDirectory() . '/ hidden=true<cr>'
 nnoremap <C-o> <cmd>Telescope live_grep<cr>
-nnoremap <C-i> <cmd>Telescope file_browser<cr>
+nnoremap <C-\> <cmd>Telescope file_browser<cr>
 nnoremap <C-u> <cmd>Telescope buffers<cr>
 nnoremap <C-y> <cmd>Telescope pickers<cr>
 
@@ -486,6 +489,7 @@ require("nvim-treesitter.configs").setup({
     },
     indent = {
         enable = true,
+        disable = { "yaml" },
         -- disable = { "javascriptreact", "javascript", "jsx" },
     },
     context_commentstring = {
