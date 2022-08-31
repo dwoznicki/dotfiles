@@ -8,6 +8,8 @@ apt --version
 if [ $? -eq 0 ]; then
     echo "Found \`apt\` binary. Installing some utilities with \`apt\`."
     sudo apt install ripgrep fd-find xclip curl flameshot
+    echo "Installing additional dependencies."
+    sudo apt install gcc g++ build-essential
 fi
 
 # Insall Starship.rs, which provides a nice command line prompt.
