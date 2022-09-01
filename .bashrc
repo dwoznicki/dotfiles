@@ -119,9 +119,6 @@ fi
 # Use nvim as our default editor
 export EDITOR="nvim"
 
-# Change CAPS to ESC
-setxkbmap -option "caps:escape"
-
 # Increse node memory limit
 NODE_OPTIONS="--max-old-space-size=8192"
 
