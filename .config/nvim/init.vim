@@ -25,6 +25,7 @@ Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'danymat/neogen'
 Plug 'AndrewRadev/splitjoin.vim'
+Plug 'NMAC427/guess-indent.nvim'
 call plug#end()
 
 " -----------------------------------------------------------------------------
@@ -595,3 +596,11 @@ nmap sj :SplitjoinSplit<cr>
 " sk: join multiple lines into a single line (cursor must be on the original line).
 nmap sk :SplitjoinJoin<cr>
 
+" -----------------------------------------------------------------------------
+" guess-indent
+lua <<EOF
+if not is_module_available("guess-indent") then
+    return
+end
+require("guess-indent").setup()
+EOF
