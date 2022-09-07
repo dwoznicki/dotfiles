@@ -92,7 +92,6 @@ vnoremap <C-Space> 10k
 nnoremap j gj
 nnoremap k gk
 
-
 " Format options here affect code comments. See :h fo-table for more details.
 " Set default text width. Vim will automatically start a new line when comment text goes above this
 " number. Note that we specify file extensions here because we don't want this behavior in every
@@ -105,6 +104,9 @@ autocmd BufNewFile,BufRead * setlocal formatoptions-=ro formatoptions+=p
 " autocmd FileType java,javascript,javascriptreact,typescript,typescriptreact setlocal comments-=:// comments+=f://
 " Don't auto-wrap text in gitcommits. Typically, I don't want any special actions for git commits.
 autocmd FileType gitcommit setlocal formatoptions-=tl
+
+" Fix SQL comment string.
+autocmd FileType sql setlocal commentstring=--%s
 
 " Press ESC to enter normal mode in terminal mode. Terminal mode can be accessed by running :term
 tnoremap <Esc> <C-\><C-n>
@@ -319,8 +321,12 @@ cmp.setup({
         {name = "path"},
         {name = "nvim_lsp_signature_help"},
     }),
-    flags = {
-        debounce_text_changes = 150,
+    -- flags = {
+    --     debounce_text_changes = 150,
+    -- },
+    performance = {
+        enabled = true,
+        debounce = 150,
     },
 })
 EOF
@@ -372,8 +378,31 @@ lspconfig.tsserver.setup({
     },
 })
 
+local home_dir = os.getenv("HOME")
+local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
+local workspace_dir = home_dir .. "/.cache/jdtls-workspaces/" .. project_name
 lspconfig.jdtls.setup({
-    cmd = {"jdtls"},
+    -- cmd = {"jdtls"},
+    cmd = {
+        "java",
+        "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+        "-Dosgi.bundles.defaultStartLevel=4",
+        "-Declipse.product=org.eclipse.jdt.ls.core.product",
+        "-Dlog.protocol=true",
+        "-Dlog.level=ALL",
+        "-Xms1g",
+        "--add-modules=ALL-SYSTEM",
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang=ALL-UNNAMED",
+        "-jar",
+        home_dir .. "/.config/jdtls/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar",
+        "-configuration",
+        home_dir .. "/.config/jdtls/config_linux",
+        "-data",
+        workspace_dir
+  },
     filetypes = {"java"},
     root_dir = function(fname)
         return util.root_pattern("build.xml")(fname)
@@ -386,16 +415,19 @@ lspconfig.jdtls.setup({
                     "ivylib/**/*.jar",
                     "main/bin/**/*.jar",
                     "test/bin/**/*.jar",
+                    "bin/**/*.jar",
                 },
                 sourcePaths = {
                     "main",
                     "test",
+                    "shared",
                 }
-            }
+            },
+            maxConcurrentBuilds = 5,
         }
     }
 })
-vim.lsp.set_log_level("info")
+vim.lsp.set_log_level("INFO")
 EOF
 
 nnoremap <C-n> <cmd>lua vim.diagnostic.goto_next({popup_opts = {focusable = false}})<cr>
@@ -443,7 +475,7 @@ let g:rooter_manual_only = 1
 let g:rooter_patterns = [ '.git', '.svn', '.bashrc', '.bash_profile' ]
 nnoremap <expr> <C-p> ':Telescope find_files cwd=' . FindRootDirectory() . '/ hidden=true<cr>'
 nnoremap <C-o> <cmd>Telescope live_grep<cr>
-nnoremap <C-i> <cmd>Telescope file_browser<cr>
+nnoremap <C-\> <cmd>Telescope file_browser<cr>
 nnoremap <C-u> <cmd>Telescope buffers<cr>
 nnoremap <C-y> <cmd>Telescope pickers<cr>
 
@@ -511,7 +543,7 @@ require("nvim-treesitter.configs").setup({
         navigation = {
             enable = true,
             keymaps = {
-                goto_next_usage = "<s-n>",
+                goto_next_usage = "<s-m>",
                 goto_previous_usage = "<s-b>",
             },
         },
