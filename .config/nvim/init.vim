@@ -25,6 +25,7 @@ Plug 'L3MON4D3/LuaSnip'
 Plug 'saadparwaiz1/cmp_luasnip'
 Plug 'danymat/neogen'
 Plug 'AndrewRadev/splitjoin.vim'
+Plug 'NMAC427/guess-indent.nvim'
 call plug#end()
 
 " -----------------------------------------------------------------------------
@@ -322,8 +323,12 @@ cmp.setup({
         {name = "path"},
         {name = "nvim_lsp_signature_help"},
     }),
-    flags = {
-        debounce_text_changes = 150,
+    -- flags = {
+    --     debounce_text_changes = 150,
+    -- },
+    performance = {
+        enabled = true,
+        debounce = 150,
     },
 })
 EOF
@@ -375,8 +380,31 @@ lspconfig.tsserver.setup({
     },
 })
 
+local home_dir = os.getenv("HOME")
+local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
+local workspace_dir = home_dir .. "/.cache/jdtls-workspaces/" .. project_name
 lspconfig.jdtls.setup({
-    cmd = {"jdtls"},
+    -- cmd = {"jdtls"},
+    cmd = {
+        "java",
+        "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+        "-Dosgi.bundles.defaultStartLevel=4",
+        "-Declipse.product=org.eclipse.jdt.ls.core.product",
+        "-Dlog.protocol=true",
+        "-Dlog.level=ALL",
+        "-Xms1g",
+        "--add-modules=ALL-SYSTEM",
+        "--add-opens",
+        "java.base/java.util=ALL-UNNAMED",
+        "--add-opens",
+        "java.base/java.lang=ALL-UNNAMED",
+        "-jar",
+        home_dir .. "/.config/jdtls/plugins/org.eclipse.equinox.launcher_1.6.400.v20210924-0641.jar",
+        "-configuration",
+        home_dir .. "/.config/jdtls/config_linux",
+        "-data",
+        workspace_dir
+  },
     filetypes = {"java"},
     root_dir = function(fname)
         return util.root_pattern("build.xml")(fname)
@@ -389,16 +417,19 @@ lspconfig.jdtls.setup({
                     "ivylib/**/*.jar",
                     "main/bin/**/*.jar",
                     "test/bin/**/*.jar",
+                    "bin/**/*.jar",
                 },
                 sourcePaths = {
                     "main",
                     "test",
+                    "shared",
                 }
-            }
+            },
+            maxConcurrentBuilds = 5,
         }
     }
 })
-vim.lsp.set_log_level("info")
+vim.lsp.set_log_level("INFO")
 EOF
 
 nnoremap <C-n> <cmd>lua vim.diagnostic.goto_next({popup_opts = {focusable = false}})<cr>
@@ -515,7 +546,7 @@ require("nvim-treesitter.configs").setup({
         navigation = {
             enable = true,
             keymaps = {
-                goto_next_usage = "<s-n>",
+                goto_next_usage = "<s-m>",
                 goto_previous_usage = "<s-b>",
             },
         },
@@ -567,3 +598,11 @@ nmap sj :SplitjoinSplit<cr>
 " sk: join multiple lines into a single line (cursor must be on the original line).
 nmap sk :SplitjoinJoin<cr>
 
+" -----------------------------------------------------------------------------
+" guess-indent
+lua <<EOF
+if not is_module_available("guess-indent") then
+    return
+end
+require("guess-indent").setup()
+EOF
