@@ -128,6 +128,10 @@ bind '"\C-z":"fg\015"'
 
 # Required to get Eclipse JDT language server to work with Neovim:
 # https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#jdtls
+java --version > /dev/null # make sure Java is installed
+if [ $? -eq 0 ]; then
+    export JAVA_HOME="`java -XshowSettings:properties -version 2>&1 > /dev/null | grep 'java.home' | awk '{print $3}'`"
+fi
 export JDTLS_HOME=$HOME/.local/lib/jdt-language-server-1.3.0 # Directory with the plugin and configs directories
 
 # Run Starship command line prompt
@@ -140,3 +144,4 @@ export PATH="/usr/local/go/bin:$HOME/go/bin:${PATH}"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
