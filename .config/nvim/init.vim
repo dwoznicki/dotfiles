@@ -93,8 +93,13 @@ vnoremap <C-Space> 10k
 nnoremap j gj
 nnoremap k gk
 
+" Use t/T to jump to a character in line since I'm using f/F for commenting.
 nnoremap t f
 nnoremap T F
+
+" Fix various comment strings.
+autocmd FileType cpp setlocal commentstring=//%s
+autocmd FileType sql setlocal commentstring=--%s
 
 " Format options here affect code comments. See :h fo-table for more details.
 " Set default text width. Vim will automatically start a new line when comment text goes above this
@@ -107,10 +112,7 @@ autocmd BufNewFile,BufRead *.js,*.jsx,*.ts,*.tsx,*.java,*.css,*.scss,*.rb,*.rs,*
 autocmd BufNewFile,BufRead * setlocal formatoptions-=ro formatoptions+=p
 " autocmd FileType java,javascript,javascriptreact,typescript,typescriptreact setlocal comments-=:// comments+=f://
 " Don't auto-wrap text in gitcommits. Typically, I don't want any special actions for git commits.
-autocmd FileType gitcommit setlocal formatoptions-=tl
-
-" Fix SQL comment string.
-autocmd FileType sql setlocal commentstring=--%s
+autocmd FileType gitcommit,sh setlocal formatoptions-=t formatoptions-=l
 
 " Press ESC to enter normal mode in terminal mode. Terminal mode can be accessed by running :term
 tnoremap <Esc> <C-\><C-n>
@@ -588,6 +590,7 @@ require("nvim-treesitter.configs").setup({
     },
     indent = {
         enable = true,
+        disable = { "yaml" },
         -- disable = { "javascriptreact", "javascript", "jsx" },
         disable = { "ruby" },
     },
