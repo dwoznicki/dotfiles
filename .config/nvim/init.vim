@@ -39,7 +39,7 @@ filetype plugin indent on
 " Enable syntax hightlighting.
 syntax on
 " Hide alternate buffers instead of closing them. Required for cross-buffer autocomplete.
-set hidden
+" set hidden
 
 " Always try to show 10 lines above and below the cursor.
 set scrolloff=10
@@ -93,6 +93,9 @@ vnoremap <C-Space> 10k
 nnoremap j gj
 nnoremap k gk
 
+nnoremap t f
+nnoremap T F
+
 " Format options here affect code comments. See :h fo-table for more details.
 " Set default text width. Vim will automatically start a new line when comment text goes above this
 " number. Note that we specify file extensions here because we don't want this behavior in every
@@ -115,6 +118,14 @@ nnoremap vp `[v`]
 
 nnoremap \sb <cmd>%s/\({\\|\[\) /\1/gc<cr>
 nnoremap \se <cmd>%s/\(\S\) \(}\\|\]\)/\1\2/gc<cr>
+
+" Disable mouse actions, which are turned on by default in nvim v0.8.0.
+set mouse=
+
+" Turn off line status in the first column. Visually, the sign column can be helpful for quickly
+" identifying lines with errors. But it causes the text to jump around a bit, and gets in the way
+" when copying and pasting.
+set signcolumn=no
 
 " Coloring
 " set background=dark
@@ -246,7 +257,55 @@ ls.add_snippets("typescriptreact", {
         )
     ),
 })
+
+ls.add_snippets("java", {
+    ls.snippet(
+        {trig = "testinit", name = "Initialize a new test class"},
+        fmt(
+[[import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
+import com.nettoolkit.test.LoggingHelper;
+import com.nettoolkit.test.MinimalRealtimeStatus;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@Tag("{tag}")
+@ExtendWith(MinimalRealtimeStatus.class)
+public class {TestName} {{
+    static {{
+        LoggingHelper.setLevelToError();
+    }}
+
+    @BeforeAll
+    protected static void setup() throws Exception {{
+    }}
+
+    @AfterEach
+    protected void reset() throws Exception {{
+    }}
+
+    @AfterAll
+    protected static void teardown() throws Exception {{
+    }}
+
+    @Test
+    void test() throws Exception {{
+        assertEquals("expected", "actual");
+    }}
+}}]],
+            {
+                tag = ls.insert_node(1, "tag"),
+                TestName = ls.insert_node(0, "TestName"),
+            }
+        )
+    ),
+})
 EOF
+
 
 " -----------------------------------------------------------------------------
 " neogen
@@ -305,6 +364,14 @@ cmp.setup({
                 fallback()
             end
         end, {"i"}),
+        -- ["()"] = cmp.mapping(function(fallback)
+        --     if cmp.visible() then
+        --         cmp.mapping.complete()
+        --         vim.api.nvim_put({"()"}, "c", false, true)
+        --     else
+        --         fallback()
+        --     end
+        -- end, {"i"}),
         ["<C-b>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), {"i", "c"}),
         ["<C-f>"] = cmp.mapping(cmp.mapping.scroll_docs(4), {"i", "c"}),
     },
@@ -325,10 +392,10 @@ cmp.setup({
     -- flags = {
     --     debounce_text_changes = 150,
     -- },
-    performance = {
-        enabled = true,
-        debounce = 150,
-    },
+    -- performance = {
+    --     enabled = true,
+    --     debounce = 150,
+    -- },
 })
 EOF
 
@@ -383,7 +450,6 @@ local home_dir = os.getenv("HOME")
 local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
 local workspace_dir = home_dir .. "/.cache/jdtls-workspaces/" .. project_name
 lspconfig.jdtls.setup({
-    -- cmd = {"jdtls"},
     cmd = {
         "java",
         "-Declipse.application=org.eclipse.jdt.ls.core.id1",
@@ -406,7 +472,7 @@ lspconfig.jdtls.setup({
   },
     filetypes = {"java"},
     root_dir = function(fname)
-        return util.root_pattern("build.xml")(fname)
+        return util.root_pattern("build.xml", "pom.xml")(fname)
     end,
     settings = {
         java = {
@@ -434,7 +500,8 @@ EOF
 nnoremap <C-n> <cmd>lua vim.diagnostic.goto_next({popup_opts = {focusable = false}})<cr>
 nnoremap <C-b> <cmd>lua vim.diagnostic.goto_prev({popup_opts = {focusable = false}})<cr>
 " nnoremap gD <cmd>lua vim.lsp.buf.declaration()<cr>
-nnoremap gd <cmd>lua vim.lsp.buf.definition()<cr>
+" nnoremap gd <cmd>lua vim.lsp.buf.definition()<cr>
+nnoremap gd <cmd>Telescope lsp_definitions<cr>
 nnoremap K <cmd>lua vim.lsp.buf.hover()<cr>
 " nnoremap gr <cmd>lua vim.lsp.buf.references()<cr>
 
@@ -533,6 +600,12 @@ require("nvim-treesitter.configs").setup({
     playground = {
         enable = true,
     },
+    folds = {
+        enable = false,
+    },
+    injections = {
+        enable = false,
+    },
     refactor = {
         enable = true,
         smart_rename = {
@@ -582,7 +655,6 @@ EOF
 nnoremap <silent> ff :CommentToggle<cr>
 " fp: toggle comment for current paragraph.
 nnoremap <silent> fp vip:CommentToggle<cr>
-" nnoremap <silent> fp mtgcip`t
 
 " -----------------------------------------------------------------------------
 " splitjoin.vim
