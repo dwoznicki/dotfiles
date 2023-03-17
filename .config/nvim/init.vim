@@ -249,7 +249,7 @@ ls.add_snippets("typescriptreact", {
         )
     ),
     ls.snippet(
-        {trig ="import", name = "import statement"},
+        {trig = "import", name = "import statement"},
         fmt(
             "import {module} from \"{file}\";",
             {
@@ -258,6 +258,27 @@ ls.add_snippets("typescriptreact", {
             }
         )
     ),
+    ls.snippet(
+        {trig = "pageinit", name = "Initialze a new TSX page"},
+        fmt(
+[[import {{render}} from "universal/react-dom";
+import Layout from "comp/Layout";
+
+const Page = () => {{
+    return <div>
+        Page content goes here...
+    </div>
+}};
+
+render(
+    <Layout>
+        <Page/>
+    </Layout>,
+    document.getElementById("root")
+);]],
+            {}
+        )
+    )
 })
 
 ls.add_snippets("java", {
@@ -307,7 +328,6 @@ public class {TestName} {{
     ),
 })
 EOF
-
 
 " -----------------------------------------------------------------------------
 " neogen
@@ -501,11 +521,9 @@ EOF
 
 nnoremap <C-n> <cmd>lua vim.diagnostic.goto_next({popup_opts = {focusable = false}})<cr>
 nnoremap <C-b> <cmd>lua vim.diagnostic.goto_prev({popup_opts = {focusable = false}})<cr>
-" nnoremap gD <cmd>lua vim.lsp.buf.declaration()<cr>
-" nnoremap gd <cmd>lua vim.lsp.buf.definition()<cr>
 nnoremap gd <cmd>Telescope lsp_definitions<cr>
 nnoremap K <cmd>lua vim.lsp.buf.hover()<cr>
-" nnoremap gr <cmd>lua vim.lsp.buf.references()<cr>
+nnoremap <C-l> <cmd>lua vim.diagnostic.reset()<cr>
 
 " -----------------------------------------------------------------------------
 " nvim-telescope
@@ -529,9 +547,16 @@ telescope.setup({
             hidden = true, -- show hidden files
             path = "%:p:h", -- open file browser in current buffer dir
             file_ignore_patterns = {".git/"}, -- ignore .git dir
-        }
+            layout_strategy = "flex",
+            layout_config = {
+                preview_cutoff = 130, -- don't show preview window if width is too short
+            },
+        },
     },
     defaults = {
+        layout_config = {
+            preview_cutoff = 130, -- don't show preview window if width is too short
+        },
         cache_picker = {
             num_pickers = 20
         },
@@ -545,7 +570,7 @@ let g:rooter_manual_only = 1
 let g:rooter_patterns = [ '.git', '.svn', '.bashrc', '.bash_profile' ]
 nnoremap <expr> <C-p> ':Telescope find_files cwd=' . FindRootDirectory() . '/ hidden=true<cr>'
 nnoremap <C-o> <cmd>Telescope live_grep<cr>
-nnoremap <C-\> <cmd>Telescope file_browser<cr>
+nnoremap <C-i> <cmd>Telescope file_browser<cr>
 nnoremap <C-u> <cmd>Telescope buffers<cr>
 nnoremap <C-y> <cmd>Telescope pickers<cr>
 
@@ -665,6 +690,12 @@ nnoremap <silent> fp vip:CommentToggle<cr>
 let g:splitjoin_curly_brace_padding = 0
 " Add trailing comma to each line when splitting.
 let g:splitjoin_trailing_comma = 1
+" Put trailing XML tag bracket on new line.
+let g:splitjoin_html_attributes_bracket_on_new_line = 1
+" For Java functions, put first argument on new line.
+let g:splitjoin_java_argument_split_first_newline = 1
+" For Java functions, put trailing parenthesis on new line.
+let g:splitjoin_java_argument_split_last_newline = 1
 
 " sj: split a single line into multiple lines.
 nmap sj :SplitjoinSplit<cr>
