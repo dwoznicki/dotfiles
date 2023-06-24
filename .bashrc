@@ -2,6 +2,10 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
+# Add color to ls output
+export CLICOLOR=1
+export LSCOLORS=ExFxCxDxBxegedabagacad
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -150,3 +154,15 @@ export PATH="/home/danwoz/.config/jdtls/bin:${PATH}"
 
 # added by Snowflake SnowSQL installer
 export PATH=/home/danwoz/.local/bin/:$PATH
+
+# Enable bash completion.
+# Fix annoying error message.
+# https://stackoverflow.com/questions/19242275/re-error-illegal-byte-sequence-on-mac-os-x
+export LC_CTYPE=C 
+export LANG=C
+[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
+
+. "$HOME/.cargo/env"
+
+# Add deno bin to path.
+export PATH="/Users/danwoz/.deno/bin:$PATH"
