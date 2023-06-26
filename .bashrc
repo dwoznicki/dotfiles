@@ -162,7 +162,7 @@ export LC_CTYPE=C
 export LANG=C
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
-. "$HOME/.cargo/env"
+[ -e "$HOME/.cargo" ] && . "$HOME/.cargo/env"
 
 # Add deno bin to path.
 export PATH="/Users/danwoz/.deno/bin:$PATH"
