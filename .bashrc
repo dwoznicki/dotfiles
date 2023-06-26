@@ -158,8 +158,8 @@ export PATH=/home/danwoz/.local/bin/:$PATH
 # Enable bash completion.
 # Fix annoying error message.
 # https://stackoverflow.com/questions/19242275/re-error-illegal-byte-sequence-on-mac-os-x
-export LC_CTYPE=C 
-export LANG=C
+# export LC_CTYPE=C 
+# export LANG=C
 [ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
 
 [ -e "$HOME/.cargo" ] && . "$HOME/.cargo/env"
