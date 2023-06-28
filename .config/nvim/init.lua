@@ -10,6 +10,7 @@ if not vim.loop.fs_stat(lazypath) then
   })
 end
 vim.opt.rtp:prepend(lazypath)
+-- vim.lsp.set_log_level("TRACE")
 
 local icons = {
   diagnostics = {
@@ -160,6 +161,17 @@ require("lazy").setup({
                 80006,
               },
             },
+            -- Don't add a space between parentheses (esp. auto import). 
+            typescript = {
+              format = {
+                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+              },
+            },
+            javascript = {
+              format = {
+                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+              },
+            },
           },
         },
         eslint = {
@@ -264,14 +276,14 @@ require("lazy").setup({
         {"gI", "<cmd>Telescope lsp_implementations<cr>", desc = "Goto implementation"},
         {"gt", "<cmd>Telescope lsp_type_definitions<cr>", desc = "Goto type definition"},
         {"K", vim.lsp.buf.hover, desc = "Hover"},
-        {"gK", vim.lsp.buf.signature_help, desc = "Signature help", has = "signatureHelp"},
-        {"<C-k>", vim.lsp.buf.signature_help, mode = "i", desc = "Signature help", has = "signatureHelp"},
+        -- {"gK", vim.lsp.buf.signature_help, desc = "Signature help", has = "signatureHelp"},
         {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
         {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
         {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
         {"<C-S-e>", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
         {"<C-w>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
         {"<C-S-w>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
+        {"<leader>cr", vim.lsp.buf.rename, desc = "Rename token"},
         {"<leader>cf", format, desc = "Format document", has = "documentFormatting"},
         {"<leader>cf", format, desc = "Format range", mode = "v", has = "documentRangeFormatting"},
         {"<leader>ca", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }, has = "codeAction"},
@@ -445,16 +457,17 @@ require("lazy").setup({
     "nvim-treesitter/nvim-treesitter",
     version = false,
     build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
+    event = {"BufReadPost", "BufNewFile"},
     config = function()
       require("nvim-treesitter.configs").setup({
-        ignore_install = { "help" },
+        ignore_install = {"help"},
         ensure_installed = "all",
         highlight = {
           enable = true,
         },
         indent = {
           enable = true,
+          disable = {"ruby"},
         },
         context_commentstring = {
           enable = true,
@@ -615,21 +628,41 @@ require("lazy").setup({
     end,
   },
   {
-    "ggandor/leap.nvim",
-    keys = {
-      { "s", mode = { "n", "x", "o" }, desc = "Leap forward to" },
-      { "S", mode = { "n", "x", "o" }, desc = "Leap backward to" },
-      { "gs", mode = { "n", "x", "o" }, desc = "Leap from windows" },
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {
+      modes = {
+        search = {
+          enabled = false,
+        },
+      },
     },
-    config = function(_, opts)
-      local leap = require("leap")
-      for k, v in pairs(opts) do
-        leap.opts[k] = v
-      end
-      leap.add_default_mappings(true)
-      vim.keymap.del({ "x", "o" }, "x")
-      vim.keymap.del({ "x", "o" }, "X")
-    end,
+    keys = {
+      {
+        "s",
+        mode = {"n", "x", "o"},
+        function()
+          require("flash").jump()
+        end,
+        desc = "Flash",
+      },
+      {
+        "S",
+        mode = {"n", "x", "o"},
+        function()
+          require("flash").treesitter()
+        end,
+        desc = "Flash treesitter",
+      },
+      {
+        "r",
+        mode = "o",
+        function()
+          require("flash").remote()
+        end,
+        desc = "Remote Flash",
+      },
+    },
   },
   {
     "folke/todo-comments.nvim",
@@ -960,6 +993,12 @@ require("lazy").setup({
       })
     end,
   },
+}, {
+  performance = {
+    rtp = {
+      reset = false,
+    },
+  },
 })
 
 -- ----------------------------------------------------------------------------------------------
@@ -999,7 +1038,7 @@ vim.opt.sidescrolloff = 8 -- Columns of context
 vim.opt.signcolumn = "no"
 vim.opt.smartcase = true -- Don't ignore case with capitals
 vim.opt.smartindent = true -- Insert indents automatically
-vim.opt.spelllang = { "en" }
+vim.opt.spelllang = {"en"}
 vim.opt.splitbelow = true -- Put new windows below current
 vim.opt.splitright = true -- Put new windows right of current
 vim.opt.tabstop = 4 -- Number of spaces tabs count for
@@ -1195,17 +1234,17 @@ vim.api.nvim_create_autocmd({ "VimResized" }, {
   end,
 })
 
--- go to last loc when opening a buffer
-vim.api.nvim_create_autocmd("BufReadPost", {
-  group = vim.api.nvim_create_augroup("last_loc", {clear = true}),
-  callback = function()
-    local mark = vim.api.nvim_buf_get_mark(0, '"')
-    local lcount = vim.api.nvim_buf_line_count(0)
-    if mark[1] > 0 and mark[1] <= lcount then
-      pcall(vim.api.nvim_win_set_cursor, 0, mark)
-    end
-  end,
-})
+-- -- go to last loc when opening a buffer
+-- vim.api.nvim_create_autocmd("BufReadPost", {
+--   group = vim.api.nvim_create_augroup("last_loc", {clear = true}),
+--   callback = function()
+--     local mark = vim.api.nvim_buf_get_mark(0, '"')
+--     local lcount = vim.api.nvim_buf_line_count(0)
+--     if mark[1] > 0 and mark[1] <= lcount then
+--       pcall(vim.api.nvim_win_set_cursor, 0, mark)
+--     end
+--   end,
+-- })
 
 -- close some filetypes with <q>
 vim.api.nvim_create_autocmd("FileType", {
@@ -1227,12 +1266,13 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- wrap and check for spell in text filetypes
+-- Settings for gitcommit, markdown files.
 vim.api.nvim_create_autocmd("FileType", {
-  group = vim.api.nvim_create_augroup("wrap_spell", {clear = true}),
-  pattern = { "gitcommit", "markdown" },
+  group = vim.api.nvim_create_augroup("gitcommit_settings", {clear = true}),
+  pattern = {"gitcommit", "markdown"},
   callback = function()
     vim.opt_local.wrap = true
+    vim.opt_local.textwidth = 9999
     vim.opt_local.spell = true
   end,
 })
