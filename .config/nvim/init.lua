@@ -71,7 +71,7 @@ vim.g.maplocalleader = " "
 
 require("lazy").setup({
   -- ----------------------------------------------------------------------------------------------
-  -- Utility
+  -- #Utility
   -- Measure startup time.
   {
     "dstein64/vim-startuptime",
@@ -100,7 +100,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Colorscheme
+  -- #Colorscheme
   {
     "rebelot/kanagawa.nvim",
     config = function()
@@ -108,7 +108,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- LSP
+  -- #LSP
   {
     "neovim/nvim-lspconfig",
     event = {"BufReadPre", "BufNewFile"},
@@ -153,27 +153,27 @@ require("lazy").setup({
             },
           },
         },
-        tsserver = {
-          settings = {
-            diagnostics = {
-              -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-              ignoredCodes = {
-                80006,
-              },
-            },
-            -- Don't add a space between parentheses (esp. auto import). 
-            typescript = {
-              format = {
-                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-              },
-            },
-            javascript = {
-              format = {
-                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-              },
-            },
-          },
-        },
+        -- tsserver = {
+        --   settings = {
+        --     diagnostics = {
+        --       -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+        --       ignoredCodes = {
+        --         80006,
+        --       },
+        --     },
+        --     -- Don't add a space between parentheses (esp. auto import). 
+        --     typescript = {
+        --       format = {
+        --         insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+        --       },
+        --     },
+        --     javascript = {
+        --       format = {
+        --         insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+        --       },
+        --     },
+        --   },
+        -- },
         eslint = {
           filetypes = {"javascript", "javascriptreact"},
         },
@@ -232,33 +232,6 @@ require("lazy").setup({
       },
     },
     config = function(_, opts)
-      -- Formatting
-      local function plugin_opts(name)
-        local plugin = require("lazy.core.config").plugins[name]
-        if not plugin then
-          return {}
-        end
-        local Plugin = require("lazy.core.plugin")
-        return Plugin.values(plugin, "opts", false)
-      end
-      local function format()
-        local buf = vim.api.nvim_get_current_buf()
-        if vim.b.autoformat == false then
-          return
-        end
-        local ft = vim.bo[buf].filetype
-        local have_nls = #require("null-ls.sources").get_available(ft, "NULL_LS_FORMATTING") > 0
-
-        vim.lsp.buf.format(vim.tbl_deep_extend("force", {
-          bufnr = buf,
-          filter = function(client)
-            if have_nls then
-              return client.name == "null-ls"
-            end
-            return client.name ~= "null-ls"
-          end,
-        }, plugin_opts("nvim-lspconfig").format or {}))
-      end
       -- Keymaps
       local function diagnostic_goto(next, severity)
           local go = next and vim.diagnostic.goto_next or vim.diagnostic.goto_prev
@@ -271,12 +244,11 @@ require("lazy").setup({
         {"<leader>cd", vim.diagnostic.open_float, desc = "Line diagnostics"},
         {"<leader>cl", "<cmd>LspInfo<cr>", desc = "Lsp info"},
         {"gd", "<cmd>Telescope lsp_definitions<cr>", desc = "Goto definition", has = "definition"},
-        {"gr", "<cmd>Telescope lsp_references<cr>", desc = "References"},
+        {"gr", "<cmd>Telescope lsp_references show_line=false<cr>", desc = "References"},
         {"gD", vim.lsp.buf.declaration, desc = "Goto declaration"},
         {"gI", "<cmd>Telescope lsp_implementations<cr>", desc = "Goto implementation"},
         {"gt", "<cmd>Telescope lsp_type_definitions<cr>", desc = "Goto type definition"},
         {"K", vim.lsp.buf.hover, desc = "Hover"},
-        -- {"gK", vim.lsp.buf.signature_help, desc = "Signature help", has = "signatureHelp"},
         {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
         {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
         {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
@@ -284,8 +256,6 @@ require("lazy").setup({
         {"<C-w>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
         {"<C-S-w>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
         {"<leader>cr", vim.lsp.buf.rename, desc = "Rename token"},
-        {"<leader>cf", format, desc = "Format document", has = "documentFormatting"},
-        {"<leader>cf", format, desc = "Format range", mode = "v", has = "documentRangeFormatting"},
         {"<leader>ca", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }, has = "codeAction"},
         {
           "<leader>cA",
@@ -400,23 +370,24 @@ require("lazy").setup({
       end
     end,
   },
-  -- formatters
   {
-    "jose-elias-alvarez/null-ls.nvim",
-    event = { "BufReadPre", "BufNewFile" },
-    dependencies = { "mason.nvim" },
-    opts = function()
-      local nls = require("null-ls")
-      return {
-        root_dir = require("null-ls.utils").root_pattern(".null-ls-root", ".neoconf.json", "Makefile", ".git"),
-        sources = {
-          nls.builtins.formatting.fish_indent,
-          nls.builtins.diagnostics.fish,
-          nls.builtins.formatting.stylua,
-          nls.builtins.formatting.shfmt,
-          -- nls.builtins.diagnostics.flake8,
+    "pmizio/typescript-tools.nvim",
+    dependencies = {"nvim-lua/plenary.nvim", "neovim/nvim-lspconfig"},
+    config = function(_, opts)
+      local api = require("typescript-tools.api")
+      require("typescript-tools").setup({
+        settings = {
+          tsserver_format_options = {
+            insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+          },
         },
-      }
+        handlers = {
+          ["textDocument/publishDiagnostics"] = api.filter_diagnostics(
+            -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+            {80006}
+          ),
+        },
+      })
     end,
   },
   -- cmdline tools and lsp servers
@@ -452,7 +423,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Treesitter
+  -- #Treesitter
   {
     "nvim-treesitter/nvim-treesitter",
     version = false,
@@ -482,7 +453,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Editor
+  -- #Editor
   {
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
@@ -498,18 +469,27 @@ require("lazy").setup({
         file_browser = {
           hidden = true, -- show hidden files
           path = "%:p:h", -- open file browser in current buffer dir
-          file_ignore_patterns = { ".git/" }, -- ignore .git dir
+          file_ignore_patterns = {".git/"}, -- ignore .git dir
           layout_strategy = "flex",
-          layout_config = {
-            preview_cutoff = 130, -- don't show preview window if width is too short
-          },
+          -- layout_config = {
+            -- preview_cutoff = 130, -- don't show preview window if width is too short
+          -- },
         },
       },
       defaults = {
         prompt_prefix = " ",
         selection_caret = " ",
+        layout_strategy = "flex",
         layout_config = {
-          preview_cutoff = 130, -- don't show preview window if width is too short
+          flex = {
+            flip_columns = 130,
+            horizontal = {
+              preview_width = 0.5,
+            },
+            vertical = {
+              preview_height =  0.3,
+            },
+          },
         },
         cache_picker = {
           num_pickers = 20,
@@ -520,6 +500,11 @@ require("lazy").setup({
               return require("telescope.actions").close(...)
             end,
           },
+        },
+        preview = {
+          filesize_limit = 2, -- 2MB
+          timeout = 200, -- 200ms
+          tresitter = false, -- no treesitter highlighting (it's slow)
         },
       },
     },
@@ -679,7 +664,7 @@ require("lazy").setup({
     },
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Coding
+  -- #Coding
   -- Fix indentation based on file context.
   {
     "nmac427/guess-indent.nvim",
@@ -729,6 +714,7 @@ require("lazy").setup({
     end,
     opts = {
       history = true,
+      region_check_events = "CursorMoved",
       delete_check_events = "TextChanged",
     },
   },
@@ -782,7 +768,7 @@ require("lazy").setup({
               fallback()
             end
           end, { "i", "s" }),
-          ["<C-CR>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-CR>"] = cmp.mapping.confirm({select = true}),
           ["<C-f>"] = cmp.mapping.scroll_docs(4),
           ["<C-b>"] = cmp.mapping.scroll_docs(-4),
         },
@@ -838,7 +824,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- UI
+  -- #UI
   {
     "stevearc/dressing.nvim",
     lazy = true,
@@ -1002,7 +988,7 @@ require("lazy").setup({
 })
 
 -- ----------------------------------------------------------------------------------------------
--- Options
+-- #Options
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
@@ -1059,7 +1045,7 @@ end
 vim.g.markdown_recommended_style = 0
 
 -- ----------------------------------------------------------------------------------------------
--- Keymaps
+-- #Keymaps
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 
@@ -1080,7 +1066,7 @@ vim.keymap.set("n", "<C-S-j>", "<C-w>j", {desc = "Go to lower window"})
 vim.keymap.set("n", "<C-S-k>", "<C-w>k", {desc = "Go to upper window"})
 vim.keymap.set("n", "<C-S-l>", "<C-w>l", {desc = "Go to right window"})
 
--- -- Resize window using <ctrl> arrow keys
+-- Resize window using <ctrl> arrow keys
 -- vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
 -- vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease window height" })
 -- vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease window width" })
@@ -1202,7 +1188,7 @@ end
 -- vim.keymap.set("n", "<leader><tab>[", "<cmd>tabprevious<cr>", { desc = "Previous Tab" })
 
 -- ----------------------------------------------------------------------------------------------
--- Autocommands
+-- #Autocommands
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 
