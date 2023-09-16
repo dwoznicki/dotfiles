@@ -107,6 +107,9 @@ require("lazy").setup({
       vim.cmd("colorscheme kanagawa")
     end,
   },
+  {
+    "Glench/Vim-Jinja2-Syntax",
+  },
   -- ----------------------------------------------------------------------------------------------
   -- LSP
   {
@@ -153,27 +156,16 @@ require("lazy").setup({
             },
           },
         },
-        tsserver = {
-          settings = {
-            diagnostics = {
-              -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-              ignoredCodes = {
-                80006,
-              },
-            },
-            -- Don't add a space between parentheses (esp. auto import). 
-            typescript = {
-              format = {
-                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-              },
-            },
-            javascript = {
-              format = {
-                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-              },
-            },
-          },
-        },
+        -- tsserver = {
+        --   settings = {
+        --     diagnostics = {
+        --       -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+        --       ignoredCodes = {
+        --         80006,
+        --       },
+        --     },
+        --   },
+        -- },
         eslint = {
           filetypes = {"javascript", "javascriptreact"},
         },
@@ -218,6 +210,7 @@ require("lazy").setup({
             },
           },
         },
+        pyright = {},
       },
       -- you can do any additional lsp server setup here
       -- return true if you don't want this server to be setup with lspconfig
@@ -399,6 +392,11 @@ require("lazy").setup({
         mlsp.setup_handlers({setup})
       end
     end,
+  },
+  {
+  "pmizio/typescript-tools.nvim",
+    dependencies = {"nvim-lua/plenary.nvim", "neovim/nvim-lspconfig"},
+    opts = {},
   },
   -- formatters
   {
