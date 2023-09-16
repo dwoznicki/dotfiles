@@ -153,27 +153,27 @@ require("lazy").setup({
             },
           },
         },
-        -- tsserver = {
-        --   settings = {
-        --     diagnostics = {
-        --       -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-        --       ignoredCodes = {
-        --         80006,
-        --       },
-        --     },
-        --     -- Don't add a space between parentheses (esp. auto import). 
-        --     typescript = {
-        --       format = {
-        --         insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-        --       },
-        --     },
-        --     javascript = {
-        --       format = {
-        --         insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-        --       },
-        --     },
-        --   },
-        -- },
+        tsserver = {
+          settings = {
+            diagnostics = {
+              -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+              ignoredCodes = {
+                80006,
+              },
+            },
+            -- Don't add a space between parentheses (esp. auto import). 
+            typescript = {
+              format = {
+                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+              },
+            },
+            javascript = {
+              format = {
+                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+              },
+            },
+          },
+        },
         eslint = {
           filetypes = {"javascript", "javascriptreact"},
         },
@@ -251,10 +251,10 @@ require("lazy").setup({
         {"K", vim.lsp.buf.hover, desc = "Hover"},
         {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
         {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
-        {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
-        {"<C-S-e>", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
-        {"<C-w>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
-        {"<C-S-w>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
+        -- {"<C-n>e", diagnostic_goto(true, "ERROR"), desc = "Next error"},
+        -- {"<C-n>E", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
+        -- {"<C-n>w", diagnostic_goto(true, "WARN"), desc = "Next warning"},
+        -- {"<C-n>W", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
         {"<leader>cr", vim.lsp.buf.rename, desc = "Rename token"},
         {"<leader>ca", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }, has = "codeAction"},
         {
@@ -370,7 +370,7 @@ require("lazy").setup({
       end
     end,
   },
-  {
+  --[[ {
     "pmizio/typescript-tools.nvim",
     dependencies = {"nvim-lua/plenary.nvim", "neovim/nvim-lspconfig"},
     config = function(_, opts)
@@ -389,7 +389,7 @@ require("lazy").setup({
         },
       })
     end,
-  },
+  }, ]]
   -- cmdline tools and lsp servers
   {
     "williamboman/mason.nvim",
@@ -563,32 +563,32 @@ require("lazy").setup({
       end
       return {
         {
-          "<C-p>",
+          "<leader>p",
           telescope_fn("files", {cwd = false}),
           desc = "Find files (root)",
         },
         {
-          "<C-S-p>",
+          "<leader>P",
           telescope_fn("files"),
           desc = "Find files (cwd)",
         },
         {
-          "<C-o>",
+          "<leader>o",
           telescope_fn("live_grep"),
           desc = "Find in files (grep)",
         },
         {
-          "<C-i>",
+          "<leader>i",
           "<cmd>Telescope file_browser<cr>",
           desc = "File browser",
         },
         {
-          "<C-u>",
+          "<leader>u",
           "<cmd>Telescope buffers<cr>",
           desc = "Buffers",
         },
         {
-          "<C-y>",
+          "<leader>'",
           "<cmd>Telescope pickers<cr>",
           desc = "Pickers",
         },
@@ -651,16 +651,14 @@ require("lazy").setup({
   },
   {
     "folke/todo-comments.nvim",
-    cmd = { "TodoTrouble", "TodoTelescope" },
-    event = { "BufReadPost", "BufNewFile" },
+    cmd = {"TodoTrouble", "TodoTelescope"},
+    event = {"BufReadPost", "BufNewFile"},
     config = true,
     -- stylua: ignore
     keys = {
-      { "<C-t>", function() require("todo-comments").jump_next() end, desc = "Next todo comment" },
-      { "<C-S-t>", function() require("todo-comments").jump_prev() end, desc = "Previous todo comment" },
-      { "<leader>xt", "<cmd>TodoTrouble<cr>", desc = "Todo (Trouble)" },
-      { "<leader>xT", "<cmd>TodoTrouble keywords=TODO,FIX,FIXME<cr>", desc = "Todo/Fix/Fixme (Trouble)" },
-      { "<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo" },
+      {"<C-t>", function() require("todo-comments").jump_next() end, desc = "Next todo comment"},
+      {"<C-S-t>", function() require("todo-comments").jump_prev() end, desc = "Previous todo comment"},
+      {"<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo"},
     },
   },
   -- ----------------------------------------------------------------------------------------------
@@ -820,9 +818,20 @@ require("lazy").setup({
           typescript = no_bracket_space_config,
         },
       })
-      vim.keymap.set("n", "<leader><Space>", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
+      vim.keymap.set("n", "<leader>j", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
     end,
   },
+  -- {
+  --   "echasnovski/mini.ai",
+  --   version = false,
+  --   config = function()
+  --     require("mini.ai").setup()
+  --   end,
+  -- },
+  -- {
+  --   "nvim-treesitter/nvim-treesitter-textobjects",
+  --   dependencies = {"nvim-treesitter/nvim-treesitter"},
+  -- },
   -- ----------------------------------------------------------------------------------------------
   -- #UI
   {
@@ -910,11 +919,11 @@ require("lazy").setup({
   },
   {
     "lukas-reineke/indent-blankline.nvim",
-    event = { "BufReadPost", "BufNewFile" },
+    event = {"BufReadPost", "BufNewFile"},
     opts = {
       -- char = "▏",
       char = "│",
-      filetype_exclude = { "help", "alpha", "dashboard", "neo-tree", "Trouble", "lazy" },
+      filetype_exclude = {"help", "alpha", "dashboard", "neo-tree", "Trouble", "lazy"},
       show_trailing_blankline_indent = false,
       show_current_context = false,
     },
@@ -1021,7 +1030,7 @@ vim.opt.shortmess:append { W = true, I = true, c = true }
 vim.opt.showmode = false -- Dont show mode since we have a statusline
 vim.opt.sidescrolloff = 8 -- Columns of context
 -- This is the column that displays line status. I prever to keep it off.
-vim.opt.signcolumn = "no"
+vim.opt.signcolumn = "yes"
 vim.opt.smartcase = true -- Don't ignore case with capitals
 vim.opt.smartindent = true -- Insert indents automatically
 vim.opt.spelllang = {"en"}
@@ -1035,6 +1044,7 @@ vim.opt.undolevels = 10000
 vim.opt.updatetime = 200 -- Save swap file and trigger CursorHold
 vim.opt.wildmode = "longest:full,full" -- Command-line completion mode
 vim.opt.winminwidth = 5 -- Minimum window width
+vim.opt.timeoutlen = 10000 -- Wait 10000 for next key press.
 
 if vim.fn.has("nvim-0.9.0") == 1 then
   vim.opt.splitkeep = "screen"
@@ -1061,10 +1071,10 @@ vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", {expr = true, silent = tru
 vim.keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", {expr = true, silent = true})
 
 -- Move to window using the CTRL + SHIFT + hjkl keys
-vim.keymap.set("n", "<C-S-h>", "<C-w>h", {desc = "Go to left window"})
-vim.keymap.set("n", "<C-S-j>", "<C-w>j", {desc = "Go to lower window"})
-vim.keymap.set("n", "<C-S-k>", "<C-w>k", {desc = "Go to upper window"})
-vim.keymap.set("n", "<C-S-l>", "<C-w>l", {desc = "Go to right window"})
+-- vim.keymap.set("n", "<C-S-h>", "<C-w>h", {desc = "Go to left window"})
+-- vim.keymap.set("n", "<C-S-j>", "<C-w>j", {desc = "Go to lower window"})
+-- vim.keymap.set("n", "<C-S-k>", "<C-w>k", {desc = "Go to upper window"})
+-- vim.keymap.set("n", "<C-S-l>", "<C-w>l", {desc = "Go to right window"})
 
 -- Resize window using <ctrl> arrow keys
 -- vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
@@ -1102,7 +1112,7 @@ vim.keymap.set({"n"}, "<cr>", "<cmd>noh<cr>", {desc = "Clear hlsearch"})
 -- taken from runtime/lua/_editor.lua
 vim.keymap.set(
   "n",
-  "<leader>ur",
+  "<leader>lr",
   "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
   {desc = "Redraw / clear hlsearch / diff update"}
 )
@@ -1163,8 +1173,15 @@ vim.keymap.set("v", ">", ">gv")
 
 -- highlights under cursor
 if vim.fn.has("nvim-0.9.0") == 1 then
-  vim.keymap.set("n", "<leader>ui", vim.show_pos, {desc = "Inspect Pos"})
+  vim.keymap.set("n", "<leader>vi", vim.show_pos, {desc = "Inspect Pos"})
 end
+
+-- Close all buffers except for current one.
+vim.keymap.set("n", "<leader>bd", "<cmd>%bd | e# | bd#<cr>", {desc = "Close all buffers except current"})
+
+-- Nicer behavior for CTRL + o, CTRL + i.
+vim.keymap.set("n", "<C-o>", "<C-o>zz")
+vim.keymap.set("n", "<C-i>", "<C-i>zz")
 
 -- floating terminal
 -- vim.keymap.set("n", "<leader>ft", function() Util.float_term(nil, { cwd = Util.get_root() }) end, { desc = "Terminal (root dir)" })
@@ -1264,7 +1281,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Auto create dir when saving a file, in case some intermediate directory does not exist
-vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+vim.api.nvim_create_autocmd({"BufWritePre"}, {
   group = vim.api.nvim_create_augroup("auto_create_dir", {clear = true}),
   callback = function(event)
     local file = vim.loop.fs_realpath(event.match) or event.match
