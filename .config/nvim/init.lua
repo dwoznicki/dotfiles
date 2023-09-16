@@ -71,7 +71,7 @@ vim.g.maplocalleader = " "
 
 require("lazy").setup({
   -- ----------------------------------------------------------------------------------------------
-  -- Utility
+  -- #Utility
   -- Measure startup time.
   {
     "dstein64/vim-startuptime",
@@ -100,7 +100,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Colorscheme
+  -- #Colorscheme
   {
     "rebelot/kanagawa.nvim",
     config = function()
@@ -111,7 +111,7 @@ require("lazy").setup({
     "Glench/Vim-Jinja2-Syntax",
   },
   -- ----------------------------------------------------------------------------------------------
-  -- LSP
+  -- #LSP
   {
     "neovim/nvim-lspconfig",
     event = {"BufReadPre", "BufNewFile"},
@@ -225,33 +225,6 @@ require("lazy").setup({
       },
     },
     config = function(_, opts)
-      -- Formatting
-      local function plugin_opts(name)
-        local plugin = require("lazy.core.config").plugins[name]
-        if not plugin then
-          return {}
-        end
-        local Plugin = require("lazy.core.plugin")
-        return Plugin.values(plugin, "opts", false)
-      end
-      local function format()
-        local buf = vim.api.nvim_get_current_buf()
-        if vim.b.autoformat == false then
-          return
-        end
-        local ft = vim.bo[buf].filetype
-        local have_nls = #require("null-ls.sources").get_available(ft, "NULL_LS_FORMATTING") > 0
-
-        vim.lsp.buf.format(vim.tbl_deep_extend("force", {
-          bufnr = buf,
-          filter = function(client)
-            if have_nls then
-              return client.name == "null-ls"
-            end
-            return client.name ~= "null-ls"
-          end,
-        }, plugin_opts("nvim-lspconfig").format or {}))
-      end
       -- Keymaps
       local function diagnostic_goto(next, severity)
           local go = next and vim.diagnostic.goto_next or vim.diagnostic.goto_prev
@@ -264,21 +237,18 @@ require("lazy").setup({
         {"<leader>cd", vim.diagnostic.open_float, desc = "Line diagnostics"},
         {"<leader>cl", "<cmd>LspInfo<cr>", desc = "Lsp info"},
         {"gd", "<cmd>Telescope lsp_definitions<cr>", desc = "Goto definition", has = "definition"},
-        {"gr", "<cmd>Telescope lsp_references<cr>", desc = "References"},
+        {"gr", "<cmd>Telescope lsp_references show_line=false<cr>", desc = "References"},
         {"gD", vim.lsp.buf.declaration, desc = "Goto declaration"},
         {"gI", "<cmd>Telescope lsp_implementations<cr>", desc = "Goto implementation"},
         {"gt", "<cmd>Telescope lsp_type_definitions<cr>", desc = "Goto type definition"},
         {"K", vim.lsp.buf.hover, desc = "Hover"},
-        -- {"gK", vim.lsp.buf.signature_help, desc = "Signature help", has = "signatureHelp"},
         {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
         {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
-        {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
-        {"<C-S-e>", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
-        {"<C-w>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
-        {"<C-S-w>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
+        -- {"<C-n>e", diagnostic_goto(true, "ERROR"), desc = "Next error"},
+        -- {"<C-n>E", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
+        -- {"<C-n>w", diagnostic_goto(true, "WARN"), desc = "Next warning"},
+        -- {"<C-n>W", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
         {"<leader>cr", vim.lsp.buf.rename, desc = "Rename token"},
-        {"<leader>cf", format, desc = "Format document", has = "documentFormatting"},
-        {"<leader>cf", format, desc = "Format range", mode = "v", has = "documentRangeFormatting"},
         {"<leader>ca", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }, has = "codeAction"},
         {
           "<leader>cA",
@@ -393,30 +363,27 @@ require("lazy").setup({
       end
     end,
   },
-  {
-  "pmizio/typescript-tools.nvim",
-    dependencies = {"nvim-lua/plenary.nvim", "neovim/nvim-lspconfig"},
-    opts = {},
-  },
   -- formatters
-  {
-    "jose-elias-alvarez/null-ls.nvim",
-    event = { "BufReadPre", "BufNewFile" },
-    dependencies = { "mason.nvim" },
-    opts = function()
-      local nls = require("null-ls")
-      return {
-        root_dir = require("null-ls.utils").root_pattern(".null-ls-root", ".neoconf.json", "Makefile", ".git"),
-        sources = {
-          nls.builtins.formatting.fish_indent,
-          nls.builtins.diagnostics.fish,
-          nls.builtins.formatting.stylua,
-          nls.builtins.formatting.shfmt,
-          -- nls.builtins.diagnostics.flake8,
+  --[[ {
+    "pmizio/typescript-tools.nvim",
+    dependencies = {"nvim-lua/plenary.nvim", "neovim/nvim-lspconfig"},
+    config = function(_, opts)
+      local api = require("typescript-tools.api")
+      require("typescript-tools").setup({
+        settings = {
+          tsserver_format_options = {
+            insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+          },
         },
-      }
+        handlers = {
+          ["textDocument/publishDiagnostics"] = api.filter_diagnostics(
+            -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+            {80006}
+          ),
+        },
+      })
     end,
-  },
+  }, ]]
   -- cmdline tools and lsp servers
   {
     "williamboman/mason.nvim",
@@ -450,7 +417,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Treesitter
+  -- #Treesitter
   {
     "nvim-treesitter/nvim-treesitter",
     version = false,
@@ -480,7 +447,7 @@ require("lazy").setup({
     end,
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Editor
+  -- #Editor
   {
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
@@ -496,18 +463,27 @@ require("lazy").setup({
         file_browser = {
           hidden = true, -- show hidden files
           path = "%:p:h", -- open file browser in current buffer dir
-          file_ignore_patterns = { ".git/" }, -- ignore .git dir
+          file_ignore_patterns = {".git/"}, -- ignore .git dir
           layout_strategy = "flex",
-          layout_config = {
-            preview_cutoff = 130, -- don't show preview window if width is too short
-          },
+          -- layout_config = {
+            -- preview_cutoff = 130, -- don't show preview window if width is too short
+          -- },
         },
       },
       defaults = {
         prompt_prefix = " ",
         selection_caret = " ",
+        layout_strategy = "flex",
         layout_config = {
-          preview_cutoff = 130, -- don't show preview window if width is too short
+          flex = {
+            flip_columns = 130,
+            horizontal = {
+              preview_width = 0.5,
+            },
+            vertical = {
+              preview_height =  0.3,
+            },
+          },
         },
         cache_picker = {
           num_pickers = 20,
@@ -518,6 +494,11 @@ require("lazy").setup({
               return require("telescope.actions").close(...)
             end,
           },
+        },
+        preview = {
+          filesize_limit = 2, -- 2MB
+          timeout = 200, -- 200ms
+          tresitter = false, -- no treesitter highlighting (it's slow)
         },
       },
     },
@@ -576,32 +557,32 @@ require("lazy").setup({
       end
       return {
         {
-          "<C-p>",
+          "<leader>p",
           telescope_fn("files", {cwd = false}),
           desc = "Find files (root)",
         },
         {
-          "<C-S-p>",
+          "<leader>P",
           telescope_fn("files"),
           desc = "Find files (cwd)",
         },
         {
-          "<C-o>",
+          "<leader>o",
           telescope_fn("live_grep"),
           desc = "Find in files (grep)",
         },
         {
-          "<C-i>",
+          "<leader>i",
           "<cmd>Telescope file_browser<cr>",
           desc = "File browser",
         },
         {
-          "<C-u>",
+          "<leader>u",
           "<cmd>Telescope buffers<cr>",
           desc = "Buffers",
         },
         {
-          "<C-y>",
+          "<leader>'",
           "<cmd>Telescope pickers<cr>",
           desc = "Pickers",
         },
@@ -664,20 +645,18 @@ require("lazy").setup({
   },
   {
     "folke/todo-comments.nvim",
-    cmd = { "TodoTrouble", "TodoTelescope" },
-    event = { "BufReadPost", "BufNewFile" },
+    cmd = {"TodoTrouble", "TodoTelescope"},
+    event = {"BufReadPost", "BufNewFile"},
     config = true,
     -- stylua: ignore
     keys = {
-      { "<C-t>", function() require("todo-comments").jump_next() end, desc = "Next todo comment" },
-      { "<C-S-t>", function() require("todo-comments").jump_prev() end, desc = "Previous todo comment" },
-      { "<leader>xt", "<cmd>TodoTrouble<cr>", desc = "Todo (Trouble)" },
-      { "<leader>xT", "<cmd>TodoTrouble keywords=TODO,FIX,FIXME<cr>", desc = "Todo/Fix/Fixme (Trouble)" },
-      { "<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo" },
+      {"<C-t>", function() require("todo-comments").jump_next() end, desc = "Next todo comment"},
+      {"<C-S-t>", function() require("todo-comments").jump_prev() end, desc = "Previous todo comment"},
+      {"<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo"},
     },
   },
   -- ----------------------------------------------------------------------------------------------
-  -- Coding
+  -- #Coding
   -- Fix indentation based on file context.
   {
     "nmac427/guess-indent.nvim",
@@ -727,6 +706,7 @@ require("lazy").setup({
     end,
     opts = {
       history = true,
+      region_check_events = "CursorMoved",
       delete_check_events = "TextChanged",
     },
   },
@@ -780,7 +760,7 @@ require("lazy").setup({
               fallback()
             end
           end, { "i", "s" }),
-          ["<C-CR>"] = cmp.mapping.confirm({ select = true }),
+          ["<C-CR>"] = cmp.mapping.confirm({select = true}),
           ["<C-f>"] = cmp.mapping.scroll_docs(4),
           ["<C-b>"] = cmp.mapping.scroll_docs(-4),
         },
@@ -832,11 +812,22 @@ require("lazy").setup({
           typescript = no_bracket_space_config,
         },
       })
-      vim.keymap.set("n", "<leader><Space>", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
+      vim.keymap.set("n", "<leader>j", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
     end,
   },
+  -- {
+  --   "echasnovski/mini.ai",
+  --   version = false,
+  --   config = function()
+  --     require("mini.ai").setup()
+  --   end,
+  -- },
+  -- {
+  --   "nvim-treesitter/nvim-treesitter-textobjects",
+  --   dependencies = {"nvim-treesitter/nvim-treesitter"},
+  -- },
   -- ----------------------------------------------------------------------------------------------
-  -- UI
+  -- #UI
   {
     "stevearc/dressing.nvim",
     lazy = true,
@@ -922,11 +913,11 @@ require("lazy").setup({
   },
   {
     "lukas-reineke/indent-blankline.nvim",
-    event = { "BufReadPost", "BufNewFile" },
+    event = {"BufReadPost", "BufNewFile"},
     opts = {
       -- char = "▏",
       char = "│",
-      filetype_exclude = { "help", "alpha", "dashboard", "neo-tree", "Trouble", "lazy" },
+      filetype_exclude = {"help", "alpha", "dashboard", "neo-tree", "Trouble", "lazy"},
       show_trailing_blankline_indent = false,
       show_current_context = false,
     },
@@ -1000,7 +991,7 @@ require("lazy").setup({
 })
 
 -- ----------------------------------------------------------------------------------------------
--- Options
+-- #Options
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 
@@ -1033,7 +1024,7 @@ vim.opt.shortmess:append { W = true, I = true, c = true }
 vim.opt.showmode = false -- Dont show mode since we have a statusline
 vim.opt.sidescrolloff = 8 -- Columns of context
 -- This is the column that displays line status. I prever to keep it off.
-vim.opt.signcolumn = "no"
+vim.opt.signcolumn = "yes"
 vim.opt.smartcase = true -- Don't ignore case with capitals
 vim.opt.smartindent = true -- Insert indents automatically
 vim.opt.spelllang = {"en"}
@@ -1047,6 +1038,7 @@ vim.opt.undolevels = 10000
 vim.opt.updatetime = 200 -- Save swap file and trigger CursorHold
 vim.opt.wildmode = "longest:full,full" -- Command-line completion mode
 vim.opt.winminwidth = 5 -- Minimum window width
+vim.opt.timeoutlen = 10000 -- Wait 10000 for next key press.
 
 if vim.fn.has("nvim-0.9.0") == 1 then
   vim.opt.splitkeep = "screen"
@@ -1057,7 +1049,7 @@ end
 vim.g.markdown_recommended_style = 0
 
 -- ----------------------------------------------------------------------------------------------
--- Keymaps
+-- #Keymaps
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 
@@ -1073,12 +1065,12 @@ vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", {expr = true, silent = tru
 vim.keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", {expr = true, silent = true})
 
 -- Move to window using the CTRL + SHIFT + hjkl keys
-vim.keymap.set("n", "<C-S-h>", "<C-w>h", {desc = "Go to left window"})
-vim.keymap.set("n", "<C-S-j>", "<C-w>j", {desc = "Go to lower window"})
-vim.keymap.set("n", "<C-S-k>", "<C-w>k", {desc = "Go to upper window"})
-vim.keymap.set("n", "<C-S-l>", "<C-w>l", {desc = "Go to right window"})
+-- vim.keymap.set("n", "<C-S-h>", "<C-w>h", {desc = "Go to left window"})
+-- vim.keymap.set("n", "<C-S-j>", "<C-w>j", {desc = "Go to lower window"})
+-- vim.keymap.set("n", "<C-S-k>", "<C-w>k", {desc = "Go to upper window"})
+-- vim.keymap.set("n", "<C-S-l>", "<C-w>l", {desc = "Go to right window"})
 
--- -- Resize window using <ctrl> arrow keys
+-- Resize window using <ctrl> arrow keys
 -- vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
 -- vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease window height" })
 -- vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease window width" })
@@ -1114,7 +1106,7 @@ vim.keymap.set({"n"}, "<cr>", "<cmd>noh<cr>", {desc = "Clear hlsearch"})
 -- taken from runtime/lua/_editor.lua
 vim.keymap.set(
   "n",
-  "<leader>ur",
+  "<leader>lr",
   "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
   {desc = "Redraw / clear hlsearch / diff update"}
 )
@@ -1175,8 +1167,15 @@ vim.keymap.set("v", ">", ">gv")
 
 -- highlights under cursor
 if vim.fn.has("nvim-0.9.0") == 1 then
-  vim.keymap.set("n", "<leader>ui", vim.show_pos, {desc = "Inspect Pos"})
+  vim.keymap.set("n", "<leader>vi", vim.show_pos, {desc = "Inspect Pos"})
 end
+
+-- Close all buffers except for current one.
+vim.keymap.set("n", "<leader>bd", "<cmd>%bd | e# | bd#<cr>", {desc = "Close all buffers except current"})
+
+-- Nicer behavior for CTRL + o, CTRL + i.
+vim.keymap.set("n", "<C-o>", "<C-o>zz")
+vim.keymap.set("n", "<C-i>", "<C-i>zz")
 
 -- floating terminal
 -- vim.keymap.set("n", "<leader>ft", function() Util.float_term(nil, { cwd = Util.get_root() }) end, { desc = "Terminal (root dir)" })
@@ -1200,7 +1199,7 @@ end
 -- vim.keymap.set("n", "<leader><tab>[", "<cmd>tabprevious<cr>", { desc = "Previous Tab" })
 
 -- ----------------------------------------------------------------------------------------------
--- Autocommands
+-- #Autocommands
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
 
@@ -1276,7 +1275,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Auto create dir when saving a file, in case some intermediate directory does not exist
-vim.api.nvim_create_autocmd({ "BufWritePre" }, {
+vim.api.nvim_create_autocmd({"BufWritePre"}, {
   group = vim.api.nvim_create_augroup("auto_create_dir", {clear = true}),
   callback = function(event)
     local file = vim.loop.fs_realpath(event.match) or event.match
