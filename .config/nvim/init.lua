@@ -251,11 +251,11 @@ require("lazy").setup({
         {"K", vim.lsp.buf.hover, desc = "Hover"},
         {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
         {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
-        -- {"<C-n>e", diagnostic_goto(true, "ERROR"), desc = "Next error"},
-        -- {"<C-n>E", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
-        -- {"<C-n>w", diagnostic_goto(true, "WARN"), desc = "Next warning"},
-        -- {"<C-n>W", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
-        {"<leader>cr", vim.lsp.buf.rename, desc = "Rename token"},
+        {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
+        {"<C-S-e>", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
+        {"<C-q>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
+        {"<C-S-q>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
+        {"<leader>rn", vim.lsp.buf.rename, desc = "Rename token"},
         {"<leader>ca", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }, has = "codeAction"},
         {
           "<leader>cA",
@@ -458,56 +458,119 @@ require("lazy").setup({
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
     version = false,
-    opts = {
-      extensions = {
-        fzf = {
-          fuzzy = false,
-          override_generic_sorter = true,
-          override_file_sorter = true,
-          case_mode = "smart_case",
+    config = function()
+      local fb_actions = require("telescope").extensions.file_browser.actions;
+      require("telescope").setup({
+        extensions = {
+          fzf = {
+            fuzzy = false,
+            override_generic_sorter = true,
+            override_file_sorter = true,
+            case_mode = "smart_case",
+          },
+          file_browser = {
+            hidden = true, -- show hidden files
+            path = "%:p:h", -- open file browser in current buffer dir
+            file_ignore_patterns = {".git/"}, -- ignore .git dir
+            layout_strategy = "flex",
+            mappings = {
+              ["n"] = {
+                r = false,
+                rn = fb_actions.rename,
+                ["<bs>"] = false,
+              },
+            },
+          },
         },
-        file_browser = {
-          hidden = true, -- show hidden files
-          path = "%:p:h", -- open file browser in current buffer dir
-          file_ignore_patterns = {".git/"}, -- ignore .git dir
+        defaults = {
+          prompt_prefix = " ",
+          selection_caret = " ",
           layout_strategy = "flex",
-          -- layout_config = {
-            -- preview_cutoff = 130, -- don't show preview window if width is too short
-          -- },
-        },
-      },
-      defaults = {
-        prompt_prefix = " ",
-        selection_caret = " ",
-        layout_strategy = "flex",
-        layout_config = {
-          flex = {
-            flip_columns = 130,
-            horizontal = {
-              preview_width = 0.5,
-            },
-            vertical = {
-              preview_height =  0.3,
+          layout_config = {
+            flex = {
+              flip_columns = 130,
+              horizontal = {
+                preview_width = 0.5,
+              },
+              vertical = {
+                preview_height =  0.3,
+              },
             },
           },
-        },
-        cache_picker = {
-          num_pickers = 20,
-        },
-        mappings = {
-          n = {
-            ["q"] = function(...)
-              return require("telescope.actions").close(...)
-            end,
+          cache_picker = {
+            num_pickers = 20,
+          },
+          mappings = {
+            n = {
+              ["q"] = function(...)
+                return require("telescope.actions").close(...)
+              end,
+            },
+          },
+          preview = {
+            filesize_limit = 2, -- 2MB
+            timeout = 200, -- 200ms
+            tresitter = false, -- no treesitter highlighting (it's slow)
           },
         },
-        preview = {
-          filesize_limit = 2, -- 2MB
-          timeout = 200, -- 200ms
-          tresitter = false, -- no treesitter highlighting (it's slow)
-        },
-      },
-    },
+      })
+      require("telescope").load_extension("fzf")
+      require("telescope").load_extension("file_browser")
+    end,
+    -- opts = {
+    --   extensions = {
+    --     fzf = {
+    --       fuzzy = false,
+    --       override_generic_sorter = true,
+    --       override_file_sorter = true,
+    --       case_mode = "smart_case",
+    --     },
+    --     file_browser = {
+    --       hidden = true, -- show hidden files
+    --       path = "%:p:h", -- open file browser in current buffer dir
+    --       file_ignore_patterns = {".git/"}, -- ignore .git dir
+    --       layout_strategy = "flex",
+    --       mappings = {
+    --         ["n"] = {
+    --           r = false,
+    --           rn = require("telescope.extensions.file_browser.actions").rename,
+    --           ["<bs>"] = false,
+    --         },
+    --       },
+    --     },
+    --   },
+    --   defaults = {
+    --     prompt_prefix = " ",
+    --     selection_caret = " ",
+    --     layout_strategy = "flex",
+    --     layout_config = {
+    --       flex = {
+    --         flip_columns = 130,
+    --         horizontal = {
+    --           preview_width = 0.5,
+    --         },
+    --         vertical = {
+    --           preview_height =  0.3,
+    --         },
+    --       },
+    --     },
+    --     cache_picker = {
+    --       num_pickers = 20,
+    --     },
+    --     mappings = {
+    --       n = {
+    --         ["q"] = function(...)
+    --           return require("telescope.actions").close(...)
+    --         end,
+    --       },
+    --     },
+    --     preview = {
+    --       filesize_limit = 2, -- 2MB
+    --       timeout = 200, -- 200ms
+    --       tresitter = false, -- no treesitter highlighting (it's slow)
+    --     },
+    --   },
+    -- },
     keys = function()
       local function get_root()
         local root_patterns = { ".git", "lua" }
@@ -563,32 +626,32 @@ require("lazy").setup({
       end
       return {
         {
-          "<leader>p",
+          "<leader>ff",
           telescope_fn("files", {cwd = false}),
           desc = "Find files (root)",
         },
         {
-          "<leader>P",
+          "<leader>fF",
           telescope_fn("files"),
           desc = "Find files (cwd)",
         },
         {
-          "<leader>o",
+          "<leader>fg",
           telescope_fn("live_grep"),
           desc = "Find in files (grep)",
         },
         {
-          "<leader>i",
+          "<leader>fd",
           "<cmd>Telescope file_browser<cr>",
           desc = "File browser",
         },
         {
-          "<leader>u",
+          "<leader>fs",
           "<cmd>Telescope buffers<cr>",
           desc = "Buffers",
         },
         {
-          "<leader>'",
+          "<leader>fa",
           "<cmd>Telescope pickers<cr>",
           desc = "Pickers",
         },
@@ -598,9 +661,9 @@ require("lazy").setup({
   {
     "nvim-telescope/telescope-fzf-native.nvim",
     build = "make",
-    config = function()
-      require("telescope").load_extension("fzf")
-    end,
+    -- config = function()
+    --   require("telescope").load_extension("fzf")
+    -- end,
   },
   {
     "nvim-telescope/telescope-file-browser.nvim",
@@ -608,9 +671,9 @@ require("lazy").setup({
       "nvim-telescope/telescope.nvim",
       "nvim-lua/plenary.nvim",
     },
-    config = function()
-      require("telescope").load_extension("file_browser")
-    end,
+    -- config = function()
+    --   require("telescope").load_extension("file_browser")
+    -- end,
   },
   {
     "folke/flash.nvim",
@@ -1059,8 +1122,8 @@ vim.g.markdown_recommended_style = 0
 -- These are mostly taken from:
 -- https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 
-vim.keymap.set({"n", "v"}, "<C-j>", "10j", {desc = "Move cursor down 10 lines"})
-vim.keymap.set({"n", "v"}, "<C-k>", "10k", {desc = "Move cursor up 10 lines"})
+vim.keymap.set({"n", "v"}, "<CR>", "10j", {desc = "Move cursor down 10 lines"})
+vim.keymap.set({"n", "v"}, "<S-CR>", "10k", {desc = "Move cursor up 10 lines"})
 
 vim.keymap.set("n", "<Space>", "<NOP>", {desc = "Unmap leader key"})
 
@@ -1071,10 +1134,10 @@ vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", {expr = true, silent = tru
 vim.keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", {expr = true, silent = true})
 
 -- Move to window using the CTRL + SHIFT + hjkl keys
--- vim.keymap.set("n", "<C-S-h>", "<C-w>h", {desc = "Go to left window"})
--- vim.keymap.set("n", "<C-S-j>", "<C-w>j", {desc = "Go to lower window"})
--- vim.keymap.set("n", "<C-S-k>", "<C-w>k", {desc = "Go to upper window"})
--- vim.keymap.set("n", "<C-S-l>", "<C-w>l", {desc = "Go to right window"})
+vim.keymap.set("n", "<C-h>", "<C-w>h", {desc = "Go to left window"})
+vim.keymap.set("n", "<C-j>", "<C-w>j", {desc = "Go to lower window"})
+vim.keymap.set("n", "<C-k>", "<C-w>k", {desc = "Go to upper window"})
+vim.keymap.set("n", "<C-l>", "<C-w>l", {desc = "Go to right window"})
 
 -- Resize window using <ctrl> arrow keys
 -- vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase window height" })
@@ -1106,7 +1169,8 @@ vim.keymap.set("v", "<A-k>", ":m '<-2<cr>gv=gv", {desc = "Move up"})
 -- vim.keymap.set("n", "<leader>`", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
 
 -- Clear search with <cr>
-vim.keymap.set({"n"}, "<cr>", "<cmd>noh<cr>", {desc = "Clear hlsearch"})
+-- vim.keymap.set({"n"}, "<CR>", "<CMD>nohlsearch<CR>", {desc = "Clear hlsearch"})
+vim.keymap.set({"n"}, "<Esc>", "<CMD>nohlsearch<CR><Esc>", {desc = "Clear hlsearch"})
 
 -- Clear search, diff update and redraw
 -- taken from runtime/lua/_editor.lua
