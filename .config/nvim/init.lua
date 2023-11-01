@@ -107,6 +107,9 @@ require("lazy").setup({
       vim.cmd("colorscheme kanagawa")
     end,
   },
+  {
+    "Glench/Vim-Jinja2-Syntax",
+  },
   -- ----------------------------------------------------------------------------------------------
   -- #LSP
   {
@@ -153,27 +156,16 @@ require("lazy").setup({
             },
           },
         },
-        tsserver = {
-          settings = {
-            diagnostics = {
-              -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-              ignoredCodes = {
-                80006,
-              },
-            },
-            -- Don't add a space between parentheses (esp. auto import). 
-            typescript = {
-              format = {
-                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-              },
-            },
-            javascript = {
-              format = {
-                insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
-              },
-            },
-          },
-        },
+        -- tsserver = {
+        --   settings = {
+        --     diagnostics = {
+        --       -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+        --       ignoredCodes = {
+        --         80006,
+        --       },
+        --     },
+        --   },
+        -- },
         eslint = {
           filetypes = {"javascript", "javascriptreact"},
         },
@@ -218,6 +210,8 @@ require("lazy").setup({
             },
           },
         },
+        -- pyright = {},
+        rust_analyzer = {},
       },
       -- you can do any additional lsp server setup here
       -- return true if you don't want this server to be setup with lspconfig
@@ -370,6 +364,7 @@ require("lazy").setup({
       end
     end,
   },
+  -- formatters
   --[[ {
     "pmizio/typescript-tools.nvim",
     dependencies = {"nvim-lua/plenary.nvim", "neovim/nvim-lspconfig"},
@@ -449,8 +444,14 @@ require("lazy").setup({
         injections = {
           enable = false,
         },
+        playground = {
+          enable = true,
+        },
       })
     end,
+  },
+  {
+    "nvim-treesitter/playground",
   },
   -- ----------------------------------------------------------------------------------------------
   -- #Editor
@@ -1179,15 +1180,14 @@ vim.keymap.set("v", "<A-k>", ":m '<-2<cr>gv=gv", {desc = "Move up"})
 -- vim.keymap.set("n", "<leader>bb", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
 -- vim.keymap.set("n", "<leader>`", "<cmd>e #<cr>", { desc = "Switch to Other Buffer" })
 
--- Clear search with <cr>
--- vim.keymap.set({"n"}, "<CR>", "<CMD>nohlsearch<CR>", {desc = "Clear hlsearch"})
+-- Clear search with <Esc>
 vim.keymap.set({"n"}, "<Esc>", "<CMD>nohlsearch<CR><Esc>", {desc = "Clear hlsearch"})
 
 -- Clear search, diff update and redraw
 -- taken from runtime/lua/_editor.lua
 vim.keymap.set(
-  "n",
-  "<leader>lr",
+  {"n"},
+  "<leader>ll",
   "<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>",
   {desc = "Redraw / clear hlsearch / diff update"}
 )
@@ -1195,7 +1195,7 @@ vim.keymap.set(
 vim.keymap.set({"n", "x"}, "gw", "*N", {desc = "Search word under cursor"})
 
 -- https://github.com/mhinz/vim-galore#saner-behavior-of-n-and-n
-vim.keymap.set("n", "n", "'Nn'[v:searchforward]", {expr = true, desc = "Next search result" })
+vim.keymap.set("n", "n", "'Nn'[v:searchforward]", {expr = true, desc = "Next search result"})
 vim.keymap.set("x", "n", "'Nn'[v:searchforward]", {expr = true, desc = "Next search result"})
 vim.keymap.set("o", "n", "'Nn'[v:searchforward]", {expr = true, desc = "Next search result"})
 vim.keymap.set("n", "N", "'nN'[v:searchforward]", {expr = true, desc = "Prev search result"})
