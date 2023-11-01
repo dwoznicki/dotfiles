@@ -475,9 +475,9 @@ require("lazy").setup({
             layout_strategy = "flex",
             mappings = {
               ["n"] = {
-                r = false,
-                rn = fb_actions.rename,
-                ["<bs>"] = false,
+                r = false, -- r is for commenting
+                rn = fb_actions.rename, -- use rn for renaming instead
+                ["<bs>"] = false, -- backspace to go up a dir is annoying
               },
             },
           },
@@ -819,7 +819,7 @@ require("lazy").setup({
             else
               fallback()
             end
-          end, { "i", "s" }),
+          end, {"i", "s"}),
           ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_prev_item()
@@ -828,8 +828,19 @@ require("lazy").setup({
             else
               fallback()
             end
-          end, { "i", "s" }),
-          ["<C-CR>"] = cmp.mapping.confirm({select = true}),
+          end, {"i", "s"}),
+          -- ["<C-CR>"] = cmp.mapping.confirm({select = true}),
+          ["<CR>"] = cmp.mapping({
+            i = function(fallback)
+              if cmp.visible() and cmp.get_active_entry() then
+                cmp.confirm({behavior = cmp.ConfirmBehavior.Replace, select = false})
+              else
+                fallback()
+              end
+            end,
+            s = cmp.mapping.confirm({select = true}),
+            c = cmp.mapping.confirm({behavior = cmp.ConfirmBehavior.Replace, select = true})
+          }),
           ["<C-f>"] = cmp.mapping.scroll_docs(4),
           ["<C-b>"] = cmp.mapping.scroll_docs(-4),
         },
