@@ -1,4 +1,5 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
     "git",
@@ -147,6 +148,9 @@ require("lazy").setup({
           -- mason = false, -- set to false if you don't want this server to be installed with mason
           settings = {
             Lua = {
+              diagnostics = {
+                globals = {"vim"},
+              },
               workspace = {
                 checkThirdParty = false,
               },
@@ -156,18 +160,18 @@ require("lazy").setup({
             },
           },
         },
-        -- tsserver = {
-        --   settings = {
-        --     diagnostics = {
-        --       -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-        --       ignoredCodes = {
-        --         80006,
-        --       },
-        --     },
-        --   },
-        -- },
+        tsserver = {
+          settings = {
+            diagnostics = {
+              -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+              ignoredCodes = {
+                80006,
+              },
+            },
+          },
+        },
         eslint = {
-          filetypes = {"javascript", "javascriptreact"},
+          filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
         },
         jdtls = {
           cmd = {
@@ -210,8 +214,22 @@ require("lazy").setup({
             },
           },
         },
-        -- pyright = {},
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                typeCheckingMode = "basic",
+                pythonPath = "/opt/homebrew/bin/python3",
+                extraPaths = {
+                  "/tmp/python_packages/site-packages/",
+                  "/opt/homebrew/lib/python3.11/site-packages/",
+                },
+              },
+            },
+          },
+        },
         rust_analyzer = {},
+        tailwindcss = {},
       },
       -- you can do any additional lsp server setup here
       -- return true if you don't want this server to be setup with lspconfig
@@ -435,9 +453,9 @@ require("lazy").setup({
           enable = true,
           disable = {"ruby"},
         },
-        context_commentstring = {
-          enable = true,
-        },
+        -- context_commentstring = {
+        --   enable = true,
+        -- },
         folds = {
           enable = false,
         },
@@ -484,7 +502,7 @@ require("lazy").setup({
           },
         },
         defaults = {
-          prompt_prefix = " ",
+          -- prompt_prefix = " ",
           selection_caret = " ",
           layout_strategy = "flex",
           layout_config = {
@@ -628,7 +646,7 @@ require("lazy").setup({
       return {
         {
           "<leader>ff",
-          telescope_fn("files", {cwd = false}),
+          telescope_fn("files", {cwd = false, path_display = {"truncate"}}),
           desc = "Find files (root)",
         },
         {
@@ -661,11 +679,15 @@ require("lazy").setup({
   },
   {
     "nvim-telescope/telescope-fzf-native.nvim",
-    build = "make",
-    -- config = function()
-    --   require("telescope").load_extension("fzf")
-    -- end,
+    build = "make"
   },
+  -- {
+  --   "nvim-telescope/telescope-fzf-native.nvim",
+  --   build = "make",
+  --   -- config = function()
+  --   --   require("telescope").load_extension("fzf")
+  --   -- end,
+  -- },
   {
     "nvim-telescope/telescope-file-browser.nvim",
     dependencies = {
@@ -738,6 +760,12 @@ require("lazy").setup({
   {
     "JoosepAlviste/nvim-ts-context-commentstring",
     lazy = true,
+    config = function()
+      -- context_commentstring nvim-treesitter module is deprecated, use require('ts_context_commentstring').setup {} and set vim.g.skip_ts_context_commentstring_module = true to speed up loading instead.
+-- This feature will be removed in ts_context_commentstring version in the future
+      require("ts_context_commentstring").setup({})
+      vim.g.skip_ts_context_commentstring_module = true
+    end
   },
   {
     "numToStr/Comment.nvim",
@@ -789,6 +817,7 @@ require("lazy").setup({
       "hrsh7th/cmp-buffer",
       "hrsh7th/cmp-path",
       "saadparwaiz1/cmp_luasnip",
+      "zbirenbaum/copilot-cmp",
     },
     opts = function()
       local has_words_before = function()
@@ -846,6 +875,7 @@ require("lazy").setup({
           ["<C-b>"] = cmp.mapping.scroll_docs(-4),
         },
         sources = cmp.config.sources({
+          {name = "copilot"},
           {name = "nvim_lsp"},
           {name = "luasnip"},
           {name = "buffer"},
@@ -873,25 +903,25 @@ require("lazy").setup({
     "Wansmer/treesj",
     dependencies = {"nvim-treesitter/nvim-treesitter"},
     config = function()
-      local lang_utils = require("treesj.langs.utils")
-      local no_bracket_space_config = {
-        object = lang_utils.set_preset_for_dict({
-          join = {
-            space_in_brackets = false,
-          },
-        }),
-        array = lang_utils.set_preset_for_list({
-          join = {
-            space_in_brackets = false,
-          },
-        }),
-      }
+      -- local lang_utils = require("treesj.langs.utils")
+      -- local no_bracket_space_config = {
+      --   object = lang_utils.set_preset_for_dict({
+      --     join = {
+      --       space_in_brackets = false,
+      --     },
+      --   }),
+      --   array = lang_utils.set_preset_for_list({
+      --     join = {
+      --       space_in_brackets = false,
+      --     },
+      --   }),
+      -- }
       require("treesj").setup({
         use_default_keymaps = false,
-        langs = {
-          tsx = no_bracket_space_config,
-          typescript = no_bracket_space_config,
-        },
+        -- langs = {
+        --   tsx = no_bracket_space_config,
+        --   typescript = no_bracket_space_config,
+        -- },
       })
       vim.keymap.set("n", "<leader>j", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
     end,
@@ -907,6 +937,26 @@ require("lazy").setup({
   --   "nvim-treesitter/nvim-treesitter-textobjects",
   --   dependencies = {"nvim-treesitter/nvim-treesitter"},
   -- },
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    config = function()
+      require("copilot").setup({
+        panel = {
+          enabled = false,
+        },
+        suggestion = {
+          enabled = false,
+        },
+      })
+    end,
+  },
+  {
+    "zbirenbaum/copilot-cmp",
+    config = function()
+      require("copilot_cmp").setup()
+    end,
+  },
   -- ----------------------------------------------------------------------------------------------
   -- #UI
   {
@@ -995,13 +1045,23 @@ require("lazy").setup({
   {
     "lukas-reineke/indent-blankline.nvim",
     event = {"BufReadPost", "BufNewFile"},
-    opts = {
-      -- char = "▏",
-      char = "│",
-      filetype_exclude = {"help", "alpha", "dashboard", "neo-tree", "Trouble", "lazy"},
-      show_trailing_blankline_indent = false,
-      show_current_context = false,
-    },
+    config = function()
+      require("ibl").setup({
+        indent = {
+          char = "▏",
+        },
+        whitespace = {
+          remove_blankline_trail = true,
+        },
+        scope = {
+          enabled = false,
+        },
+        -- char = "│",
+        -- filetype_exclude = {"help", "alpha", "dashboard", "neo-tree", "Trouble", "lazy"},
+        -- show_trailing_blankline_indent = false,
+        -- show_current_context = false,
+      })
+    end,
   },
   {
     "goolord/alpha-nvim",
@@ -1288,6 +1348,14 @@ vim.keymap.set("n", "<C-i>", "<C-i>zz")
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "*",
   command = "setlocal formatoptions-=ro",
+})
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = {"typescript", "typescriptreact"},
+  callback = function()
+    vim.opt.shiftwidth = 2
+    vim.opt.tabstop = 2
+  end
 })
 
 -- Check if we need to reload the file when it changed
