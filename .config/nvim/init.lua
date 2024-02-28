@@ -261,12 +261,19 @@ require("lazy").setup({
         {"gI", "<cmd>Telescope lsp_implementations<cr>", desc = "Goto implementation"},
         {"gt", "<cmd>Telescope lsp_type_definitions<cr>", desc = "Goto type definition"},
         {"K", vim.lsp.buf.hover, desc = "Hover"},
-        {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
-        {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
-        {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
-        {"<C-S-e>", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
-        {"<C-q>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
-        {"<C-S-q>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
+        -- {"<C-n>", diagnostic_goto(true), desc = "Next diagnostic"},
+        {"gj", diagnostic_goto(true), desc = "Next diagnostic"},
+        -- {"<C-b>", diagnostic_goto(false), desc = "Prev diagnostic"},
+        {"gk", diagnostic_goto(false), desc = "Prev diagnostic"},
+        -- {"<C-e>", diagnostic_goto(true, "ERROR"), desc = "Next error"},
+        {"ge", diagnostic_goto(true, "ERROR"), desc = "Next error"},
+        -- {"<C-S-e>", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
+        {"gE", diagnostic_goto(false, "ERROR"), desc = "Prev error"},
+        -- {"<C-q>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
+        -- {"<C-q>", diagnostic_goto(true, "WARN"), desc = "Next warning"},
+        {"gq", diagnostic_goto(true, "WARN"), desc = "Next warning"},
+        -- {"<C-S-q>", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
+        {"gR", diagnostic_goto(false, "WARN"), desc = "Prev warning"},
         {"<leader>rn", vim.lsp.buf.rename, desc = "Rename token"},
         {"<leader>ca", vim.lsp.buf.code_action, desc = "Code action", mode = { "n", "v" }, has = "codeAction"},
         {
@@ -287,17 +294,6 @@ require("lazy").setup({
       }
       local function keymap_on_attach(client, buffer)
         local Keys = require("lazy.core.handler.keys")
-        -- local keymaps = {}
-        --
-        -- for _, value in ipairs(keymap) do
-        --   local keys = Keys.parse(value)
-        --   if keys[2] == vim.NIL or keys[2] == false then
-        --     keymaps[keys.id] = nil
-        --   else
-        --     keymaps[keys.id] = keys
-        --   end
-        -- end
-
         for _, keys in pairs(keymap) do
           if not keys.has or client.server_capabilities[keys.has .. "Provider"] then
             if keys[1] == "<C-S-n>" then
@@ -314,13 +310,6 @@ require("lazy").setup({
 
       -- setup autoformat
       -- require("lazyvim.plugins.lsp.format").autoformat = opts.autoformat
-
-      -- -- setup formatting and keymaps
-      -- require("lazyvim.util").on_attach(function(client, buffer)
-      --   require("lazyvim.plugins.lsp.format").on_attach(client, buffer)
-      --   require("lazyvim.plugins.lsp.keymaps").on_attach(client, buffer)
-      -- end)
-
       vim.api.nvim_create_autocmd("LspAttach", {
         callback = function(args)
           local buffer = args.buf
@@ -531,65 +520,12 @@ require("lazy").setup({
             timeout = 200, -- 200ms
             tresitter = false, -- no treesitter highlighting (it's slow)
           },
+          path_display = {"truncate"},
         },
       })
       require("telescope").load_extension("fzf")
       require("telescope").load_extension("file_browser")
     end,
-    -- opts = {
-    --   extensions = {
-    --     fzf = {
-    --       fuzzy = false,
-    --       override_generic_sorter = true,
-    --       override_file_sorter = true,
-    --       case_mode = "smart_case",
-    --     },
-    --     file_browser = {
-    --       hidden = true, -- show hidden files
-    --       path = "%:p:h", -- open file browser in current buffer dir
-    --       file_ignore_patterns = {".git/"}, -- ignore .git dir
-    --       layout_strategy = "flex",
-    --       mappings = {
-    --         ["n"] = {
-    --           r = false,
-    --           rn = require("telescope.extensions.file_browser.actions").rename,
-    --           ["<bs>"] = false,
-    --         },
-    --       },
-    --     },
-    --   },
-    --   defaults = {
-    --     prompt_prefix = " ",
-    --     selection_caret = " ",
-    --     layout_strategy = "flex",
-    --     layout_config = {
-    --       flex = {
-    --         flip_columns = 130,
-    --         horizontal = {
-    --           preview_width = 0.5,
-    --         },
-    --         vertical = {
-    --           preview_height =  0.3,
-    --         },
-    --       },
-    --     },
-    --     cache_picker = {
-    --       num_pickers = 20,
-    --     },
-    --     mappings = {
-    --       n = {
-    --         ["q"] = function(...)
-    --           return require("telescope.actions").close(...)
-    --         end,
-    --       },
-    --     },
-    --     preview = {
-    --       filesize_limit = 2, -- 2MB
-    --       timeout = 200, -- 200ms
-    --       tresitter = false, -- no treesitter highlighting (it's slow)
-    --     },
-    --   },
-    -- },
     keys = function()
       local function get_root()
         local root_patterns = { ".git", "lua" }
@@ -681,22 +617,12 @@ require("lazy").setup({
     "nvim-telescope/telescope-fzf-native.nvim",
     build = "make"
   },
-  -- {
-  --   "nvim-telescope/telescope-fzf-native.nvim",
-  --   build = "make",
-  --   -- config = function()
-  --   --   require("telescope").load_extension("fzf")
-  --   -- end,
-  -- },
   {
     "nvim-telescope/telescope-file-browser.nvim",
     dependencies = {
       "nvim-telescope/telescope.nvim",
       "nvim-lua/plenary.nvim",
     },
-    -- config = function()
-    --   require("telescope").load_extension("file_browser")
-    -- end,
   },
   {
     "folke/flash.nvim",
@@ -746,6 +672,22 @@ require("lazy").setup({
       {"<C-S-t>", function() require("todo-comments").jump_prev() end, desc = "Previous todo comment"},
       {"<leader>st", "<cmd>TodoTelescope<cr>", desc = "Todo"},
     },
+  },
+  {
+    "akinsho/git-conflict.nvim",
+    version = "1.1.1",
+    config = function()
+      require("git-conflict").setup({
+        default_mappings = {
+          ours = "co",
+          theirs = "ct",
+          both = "cb",
+          none = "c0",
+          next = "go",
+          prev = "gp",
+        },
+      })
+    end,
   },
   -- ----------------------------------------------------------------------------------------------
   -- #Coding
@@ -1015,7 +957,7 @@ require("lazy").setup({
               },
             },
             {"filetype", icon_only = true, separator = "", padding = {left = 1, right = 0}},
-            {"filename", path = 0, symbols = {modified = "  ", readonly = "", unnamed = ""}},
+            {"filename", path = 1, symbols = {modified = "  ", readonly = "", unnamed = ""}},
           },
           lualine_x = {
             {require("lazy.status").updates, cond = require("lazy.status").has_updates, color = fg("Special")},
