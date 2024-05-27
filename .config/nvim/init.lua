@@ -70,6 +70,7 @@ local plugins = {}
 -- ----------------------------------------------------------------------------------------------
 -- #Utility plugins
 table.insert(plugins, {
+  -- Run :StartupTime to see which plugins are slow.
   "dstein64/vim-startuptime",
   cmd = "StartupTime",
   config = function()
@@ -77,12 +78,17 @@ table.insert(plugins, {
   end,
 })
 table.insert(plugins, {
+  -- Required for Telescope and others.
   "nvim-lua/plenary.nvim",
   lazy = true,
 })
+table.insert(plugins, {
+  -- Disable certain features for large files (default = 2MB).
+  "LunarVim/bigfile.nvim",
+})
 
 -- ----------------------------------------------------------------------------------------------
--- #Coding plugins
+-- #Editor plugins
 table.insert(plugins, {
   "nmac427/guess-indent.nvim",
   config = function()
@@ -198,11 +204,11 @@ table.insert(plugins, {
       --     return item
       --   end,
       -- },
-      experimental = {
-        ghost_text = {
-          hl_group = "LspCodeLens",
-        },
-      },
+      -- experimental = {
+      --   ghost_text = {
+      --     hl_group = "LspCodeLens",
+      --   },
+      -- },
     })
   end,
 })
@@ -285,6 +291,15 @@ table.insert(plugins, {
     })
   end,
 })
+table.insert(plugins, {
+  "nvim-treesitter/nvim-treesitter-context",
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+  },
+  config = function()
+    require("treesitter-context").setup()
+  end,
+})
 
 -- ----------------------------------------------------------------------------------------------
 -- #LSP plugins
@@ -292,7 +307,12 @@ table.insert(plugins, {
   "neovim/nvim-lspconfig",
   event = {"BufReadPre", "BufNewFile"},
   dependencies = {
-    "folke/neodev.nvim",
+    {
+      "folke/neodev.nvim",
+      config = function()
+        require("neodev").setup()
+      end,
+    },
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
     "hrsh7th/cmp-nvim-lsp",
@@ -302,14 +322,27 @@ table.insert(plugins, {
     -- local capabilities = require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
     lspconfig.jsonls.setup({})
     lspconfig.lua_ls.setup({
-      settings = {
-        Lua = {
-          diagnostics = {
-            globals = {"vim"},
+      on_init = function(client)
+        local path = vim.fn.getcwd()
+        if vim.loop.fs_stat(path .. "/.luarc.json") or vim.loop.fs_stat(path .. "/.luarc.jsonc") then
+          return
+        end
+
+        client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
+          runtime = {
+            version = "LuaJIT"
           },
+          -- Make the server aware of Neovim runtime files.
           workspace = {
             checkThirdParty = false,
+            library = {
+              vim.env.VIMRUNTIME,
+            },
           },
+        })
+      end,
+      settings = {
+        Lua = {
           completion = {
             callSnippet = "Replace",
           },
@@ -368,7 +401,6 @@ table.insert(plugins, {
     vim.keymap.set("n", "gq", diagnostic_goto(true, "WARN"), {desc = "Next warning"})
     vim.keymap.set("n", "gQ", diagnostic_goto(false, "WARN"), {desc = "Prev warning"})
     vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, {desc = "Rename token"})
-    vim.keymap.set({"n", "v"}, "<leader>ca", vim.lsp.buf.code_action, {desc = "Code action"})
     vim.keymap.set(
       "n",
       "<leader>cA",
@@ -401,6 +433,19 @@ table.insert(plugins, {
       ensure_installed = {
         "stylua",
         "shfmt",
+      },
+    })
+  end,
+})
+table.insert(plugins, {
+  "luckasRanarison/clear-action.nvim",
+  config = function()
+    require("clear-action").setup({
+      signs = {
+        position = "right_align",
+      },
+      mappings = {
+        code_action = "<leader>ca",
       },
     })
   end,
@@ -483,14 +528,59 @@ table.insert(plugins, {
 })
 
 -- ----------------------------------------------------------------------------------------------
--- #UI plugins
+-- #Git plugins
 table.insert(plugins, {
-  "diegoulloao/neofusion.nvim",
+  "akinsho/git-conflict.nvim",
+  version = "1.1.1",
   config = function()
-    vim.opt.background = "dark"
-    vim.cmd("colorscheme neofusion")
+    require("git-conflict").setup({
+      default_mappings = {
+        ours = "<leader>ho",
+        theirs = "<leader>ht",
+        both = "<leader>hh",
+        none = "<leader>h0",
+        next = "go",
+        prev = "gp",
+      },
+    })
   end,
 })
+table.insert(plugins, {
+  "lewis6991/gitsigns.nvim",
+  config = function()
+    local gitsigns = require("gitsigns")
+    gitsigns.setup()
+    vim.keymap.set("n", "<leader>hb", gitsigns.blame_line, {desc = "Git blame line"})
+    vim.keymap.set("n", "<leader>hB", function() gitsigns.blame_line({full = true}) end, {desc = "Git blame line (full)"})
+    vim.keymap.set("n", "<leader>hd", gitsigns.diffthis, {desc = "Git diff line"})
+  end,
+})
+
+-- ----------------------------------------------------------------------------------------------
+-- #Colorscheme plugins
+table.insert(plugins, {
+  "diegoulloao/neofusion.nvim",
+  -- config = function()
+  --   vim.opt.background = "dark"
+  --   vim.cmd("colorscheme neofusion")
+  --   require("lualine").options.theme = require("neofusion.lualine")
+  -- end,
+})
+table.insert(plugins, {
+  "mellow-theme/mellow.nvim",
+  -- config = function()
+  --   vim.cmd("colorscheme mellow")
+  -- end
+})
+table.insert(plugins, {
+  "rebelot/kanagawa.nvim",
+  config = function()
+    vim.cmd("colorscheme kanagawa")
+  end,
+})
+
+-- ----------------------------------------------------------------------------------------------
+-- #UI plugins
 table.insert(plugins, {
   "nvim-lualine/lualine.nvim",
   event = "VeryLazy",
@@ -505,7 +595,7 @@ table.insert(plugins, {
     local lualine = require("lualine")
     lualine.setup({
       options = {
-        theme = require("neofusion.lualine"),
+        theme = "auto",
         globalstatus = true,
         disabled_filetypes = {statusline = {"dashboard", "alpha"}},
       },
@@ -596,6 +686,9 @@ table.insert(plugins, {
 table.insert(plugins, {
   "nvim-telescope/telescope.nvim",
   cmd = "Telescope",
+  dependencies = {
+    "nvim-lua/plenary.nvim",
+  },
   config = function()
     require("telescope").setup({
       extensions = {
@@ -716,7 +809,7 @@ table.insert(plugins, {
       },
       {
         "<leader>fs",
-        "<cmd>Telescope buffers<cr>",
+        "<cmd>Telescope buffers sort_mru=true sort_lastused=true<cr>",
         desc = "Buffers",
       },
       {
@@ -728,6 +821,16 @@ table.insert(plugins, {
         "<leader>fr",
         "<cmd>Telescope oldfiles<cr>",
         desc = "Recent files",
+      },
+      {
+        "<leader>fC",
+        "<cmd>Telescope colorscheme enable_preview=true<cr>",
+        desc = "Color scheme picker",
+      },
+      {
+        "<leader>fK",
+        "<cmd>Telescope keymaps<cr>",
+        desc = "Keymaps",
       },
     }
   end,
