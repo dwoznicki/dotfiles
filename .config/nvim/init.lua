@@ -1,13 +1,6 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
-    lazypath,
-  })
+  vim.fn.system({"git", "clone", "--filter=blob:none", "https://github.com/folke/lazy.nvim.git", "--branch=stable"}) -- latest stable release lazypath,
 end
 vim.opt.rtp:prepend(lazypath)
 
@@ -126,6 +119,7 @@ table.insert(plugins, {
 })
 table.insert(plugins, {
   "hrsh7th/nvim-cmp",
+  version = false, -- Doesn't use releases
   event = "InsertEnter",
   dependencies = {
     "hrsh7th/cmp-nvim-lsp",
@@ -195,15 +189,14 @@ table.insert(plugins, {
         {name = "buffer"},
         {name = "path"},
       }),
-      -- formatting = {
-      --   format = function(_, item)
-      --     local icons = icons.kinds
-      --     if icons[item.kind] then
-      --       item.kind = icons[item.kind] .. item.kind
-      --     end
-      --     return item
-      --   end,
-      -- },
+      formatting = {
+        format = function(_, item)
+          if icons.kinds[item.kind] then
+            item.kind = icons.kinds[item.kind] .. item.kind
+          end
+          return item
+        end,
+      },
       -- experimental = {
       --   ghost_text = {
       --     hl_group = "LspCodeLens",
@@ -420,8 +413,16 @@ table.insert(plugins, {
     vim.diagnostic.config({
       underline = true,
       update_in_insert = false,
-      virtual_text = {spacing = 4, prefix = "●"},
+      virtual_text = {spacing = 4, source="if_many", prefix = "●"},
       severity_sort = true,
+      signs = {
+        text = {
+          [vim.diagnostic.severity.ERROR] = icons.diagnostics.Error,
+          [vim.diagnostic.severity.WARN] = icons.diagnostics.Warn,
+          [vim.diagnostic.severity.HINT] = icons.diagnostics.Hint,
+          [vim.diagnostic.severity.INFO] = icons.diagnostics.Info,
+        },
+      },
     })
   end,
 })
@@ -448,6 +449,12 @@ table.insert(plugins, {
         code_action = "<leader>ca",
       },
     })
+  end,
+})
+table.insert(plugins, {
+  "j-hui/fidget.nvim",
+  config = function()
+    require("fidget").setup()
   end,
 })
 
@@ -503,18 +510,10 @@ table.insert(plugins, {
       },
     })
     -- Open and close debugging UI when debugger is attached/unattached. 
-    dap.listeners.before.attach.dapui_config = function()
-      dap_ui.open()
-    end
-    dap.listeners.before.launch.dapui_config = function()
-      dap_ui.open()
-    end
-    dap.listeners.before.event_terminated.dapui_config = function()
-      dap_ui.close()
-    end
-    dap.listeners.before.event_exited.dapui_config = function()
-      dap_ui.close()
-    end
+    dap.listeners.before.attach.dapui_config = dap_ui.open
+    dap.listeners.before.launch.dapui_config = dap_ui.open
+    dap.listeners.before.event_terminated.dapui_config = dap_ui.close
+    dap.listeners.before.event_exited.dapui_config = dap_ui.close
 
     vim.keymap.set("n", "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", {desc = "Toggle breakpoint"})
     vim.keymap.set("n", "<leader>dl", "<cmd>lua require('dap').clear_breakpoints()<cr>", {desc = "Clear all breakpoints"})
@@ -971,6 +970,8 @@ vim.opt.shortmess:append({W = true, I = true, c = true, C = true})
 vim.opt.showmode = false -- Dont show mode since we have a statusline
 vim.opt.pumblend = 10 -- Popup blend
 vim.opt.pumheight = 10 -- Maximum number of entries in a popup
+vim.opt.list = true
+vim.opt.listchars = {tab = "» ", trail = "·", nbsp = "␣"}
 
 -- ------------------------------------------------------------------------------------------------
 -- #Keymaps
