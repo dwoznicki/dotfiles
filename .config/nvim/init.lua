@@ -58,6 +58,11 @@ local icons = {
   },
 }
 
+local filepath = vim.fn.expand("%")
+if filepath == "" or filepath == nil then
+  filepath = vim.fn.getcwd()
+end
+
 local plugins = {}
 
 -- ----------------------------------------------------------------------------------------------
@@ -126,7 +131,12 @@ table.insert(plugins, {
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-path",
     "saadparwaiz1/cmp_luasnip",
-    "zbirenbaum/copilot-cmp",
+    {
+      "zbirenbaum/copilot-cmp",
+      config = function()
+        require("copilot_cmp").setup()
+      end,
+    },
   },
   config = function()
     local has_words_before = function()
@@ -183,8 +193,8 @@ table.insert(plugins, {
         ["<C-b>"] = cmp.mapping.scroll_docs(-4),
       },
       sources = cmp.config.sources({
-        {name = "nvim_lsp"},
         {name = "copilot"},
+        {name = "nvim_lsp"},
         {name = "luasnip"},
         {name = "buffer"},
         {name = "path"},
@@ -224,16 +234,6 @@ table.insert(plugins, {
       region_check_events = "CursorMoved",
       delete_check_events = "TextChanged",
     })
-  end,
-})
-table.insert(plugins, {
-  "Wansmer/treesj",
-  dependencies = {"nvim-treesitter/nvim-treesitter"},
-  config = function()
-    require("treesj").setup({
-      use_default_keymaps = false,
-    })
-    vim.keymap.set("n", "<leader>j", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
   end,
 })
 table.insert(plugins, {
@@ -281,6 +281,9 @@ table.insert(plugins, {
       highlight = {
         enable = true,
       },
+      indent = {
+        enable = true,
+      },
     })
   end,
 })
@@ -290,7 +293,19 @@ table.insert(plugins, {
     "nvim-treesitter/nvim-treesitter",
   },
   config = function()
-    require("treesitter-context").setup()
+    require("treesitter-context").setup({
+      multiline_threshold = 1,
+    })
+  end,
+})
+table.insert(plugins, {
+  "Wansmer/treesj",
+  dependencies = {"nvim-treesitter/nvim-treesitter"},
+  config = function()
+    require("treesj").setup({
+      use_default_keymaps = false,
+    })
+    vim.keymap.set("n", "<leader>j", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
   end,
 })
 
@@ -313,8 +328,17 @@ table.insert(plugins, {
   config = function()
     local lspconfig = require("lspconfig")
     -- local capabilities = require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
-    lspconfig.jsonls.setup({})
+    local capabilities = vim.tbl_deep_extend(
+      "force",
+      {},
+      vim.lsp.protocol.make_client_capabilities(),
+      require("cmp_nvim_lsp").default_capabilities()
+    )
+    lspconfig.jsonls.setup({
+      capabilities = vim.deepcopy(capabilities),
+    })
     lspconfig.lua_ls.setup({
+      capabilities = vim.deepcopy(capabilities),
       on_init = function(client)
         local path = vim.fn.getcwd()
         if vim.loop.fs_stat(path .. "/.luarc.json") or vim.loop.fs_stat(path .. "/.luarc.jsonc") then
@@ -343,6 +367,7 @@ table.insert(plugins, {
       },
     })
     lspconfig.tsserver.setup({
+      capabilities = vim.deepcopy(capabilities),
       settings = {
         diagnostics = {
           -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
@@ -353,24 +378,36 @@ table.insert(plugins, {
       },
     })
     lspconfig.eslint.setup({
+      capabilities = vim.deepcopy(capabilities),
       filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
     })
+    local python_extra_paths = {}
+    if string.find(filepath, "outset%-ai/webrtc") then
+      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/webrtc_python312_packages")
+    elseif string.find(filepath, "outset%-ai/backend") then
+      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/backend_python_packages_312")
+    end
     lspconfig.pyright.setup({
+      capabilities = vim.deepcopy(capabilities),
       settings = {
         python = {
           analysis = {
             typeCheckingMode = "basic",
             pythonPath = "/opt/homebrew/bin/python3",
-            extraPaths = {
-              "~/OrbStack/docker/volumes/backend_python_packages_312",
-              "/tmp/python_packages/site-packages",
-            },
+            extraPaths = python_extra_paths,
+            -- extraPaths = {
+            --   "~/OrbStack/docker/volumes/backend_python_packages_312",
+            -- },
           },
         },
       },
     })
-    lspconfig.rust_analyzer.setup({})
-    lspconfig.tailwindcss.setup({})
+    lspconfig.rust_analyzer.setup({
+      capabilities = vim.deepcopy(capabilities),
+    })
+    lspconfig.tailwindcss.setup({
+      capabilities = vim.deepcopy(capabilities),
+    })
 
     local function diagnostic_goto(next, severity)
       local go = next and vim.diagnostic.goto_next or vim.diagnostic.goto_prev
@@ -474,6 +511,7 @@ table.insert(plugins, {
     dap_python.setup("/opt/homebrew/bin/python3")
     dap.configurations.python = {
       {
+        justMyCode = false,
         type = "python",
         request = "attach",
         name = "Attach to Docker",
@@ -965,7 +1003,7 @@ vim.opt.spelllang = {"en"}
 vim.opt.termguicolors = true -- True color support
 vim.opt.undofile = true
 vim.opt.undolevels = 10000
-vim.opt.mouse = nil -- Disable the mouse
+vim.opt.mouse = "" -- Disable the mouse
 vim.opt.shortmess:append({W = true, I = true, c = true, C = true})
 vim.opt.showmode = false -- Dont show mode since we have a statusline
 vim.opt.pumblend = 10 -- Popup blend
