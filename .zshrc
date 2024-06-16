@@ -9,6 +9,9 @@ export NVM_DIR="$HOME/.nvm"
 export EDITOR="nvim"
 # Enable autocomplete.
 autoload -Uz compinit && compinit
+# Load ls colors.
+export CLICOLOR=1
+[ -e "~/.lscolors.sh" ] && source "~/.lscolors.sh"
 # Add some aliases.
 alias e="nvim"
 alias se="sudo nvim"

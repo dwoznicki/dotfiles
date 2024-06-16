@@ -13,7 +13,8 @@ ln -nfs `pwd`/.config/starship.toml ~/.config/starship.toml
 mkdir -p ~/.config/nvim/
 ln -nfs `pwd`/.config/nvim/init.lua ~/.config/nvim/init.lua
 mkdir -p ~/.config/wezterm/
-ln -nfs `pwd`/.config/wezterm/wezterm.lua ~/.config/wezterm/wezterm.lua
-ln -nfs `pwd`/.config/wezterm/colors ~/.config/wezterm/colors
+ln -nfs `pwd`/.config/wezterm/* ~/.config/wezterm/
 mkdir -p ~/.local/bin/
 ln -nfs `pwd`/.local/bin/* ~/.local/bin/
+ln -nfs `pwd`/.lscolors.sh ~/.lscolors.sh
+ln -nfs `pwd`/.zshrc ~/.zshrc
