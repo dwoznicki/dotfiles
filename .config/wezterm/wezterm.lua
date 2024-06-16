@@ -16,4 +16,10 @@ config.keys = {
     {key = "LeftArrow", mods = "OPT", action = wezterm.action({SendString = "\x1bb"})},
     {key = "RightArrow", mods = "OPT", action = wezterm.action({SendString = "\x1bf"})},
 }
+config.keys = {
+  {key = "LeftArrow", mods = "SHIFT|OPT", action = wezterm.action.MoveTabRelative(-1)},
+  {key = "RightArrow", mods = "SHIFT|OPT", action = wezterm.action.MoveTabRelative(1)},
+}
+config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
+
 return config
