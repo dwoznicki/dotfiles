@@ -1062,7 +1062,7 @@ vim.keymap.set({"n", "v"}, "<leader>y", '"+y', {desc = "Copy to system clipboard
 -- ------------------------------------------------------------------------------------------------
 -- #Autocommands
 -- Check if we need to reload the file when it changed.
-vim.api.nvim_create_autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
+vim.api.nvim_create_autocmd({"FocusGained", "TermClose", "TermLeave"}, {
   group = vim.api.nvim_create_augroup("checktime", {clear = true}),
   command = "checktime",
 })
@@ -1115,10 +1115,20 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Auto create dir when saving a file, in case some intermediate directory does not exist.
-vim.api.nvim_create_autocmd({"BufWritePre"}, {
+vim.api.nvim_create_autocmd("BufWritePre", {
   group = vim.api.nvim_create_augroup("auto_create_dir", {clear = true}),
   callback = function(event)
     local file = vim.loop.fs_realpath(event.match) or event.match
     vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
+  end,
+})
+
+-- No really, I don't want comment tokens on newlines.
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("format_options", {clear = true}),
+  pattern = {"*"},
+  callback = function()
+    vim.opt_local.fo:remove("o")
+    vim.opt_local.fo:remove("r")
   end,
 })
