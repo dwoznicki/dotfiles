@@ -430,7 +430,7 @@ table.insert(plugins, {
     vim.keymap.set("n", "gE", diagnostic_goto(false, "ERROR"), {desc = "Prev error"})
     vim.keymap.set("n", "gq", diagnostic_goto(true, "WARN"), {desc = "Next warning"})
     vim.keymap.set("n", "gQ", diagnostic_goto(false, "WARN"), {desc = "Prev warning"})
-    vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, {desc = "Rename token"})
+    vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, {desc = "Rename token"})
     vim.keymap.set(
       "n",
       "<leader>cA",
@@ -675,22 +675,11 @@ table.insert(plugins, {
 })
 table.insert(plugins, {
   "stevearc/dressing.nvim",
-  lazy = true,
   config = function()
-    ---@diagnostic disable-next-line: duplicate-set-field
-    vim.ui.select = function(...)
-      require("lazy").load({plugins = { "dressing.nvim" }})
-      return vim.ui.select(...)
-    end
-    ---@diagnostic disable-next-line: duplicate-set-field
-    vim.ui.input = function(...)
-      require("lazy").load({ plugins = {"dressing.nvim" }})
-      return vim.ui.input(...)
-    end
     require("dressing").setup({
       input = {
-        -- Prefer wider windows for input.
-        prefer_width = 0.9,
+        -- Allow entering Normal mode.
+        insert_only = false,
       },
     })
   end,
@@ -1058,6 +1047,26 @@ vim.keymap.set("n", "<C-o>", "<C-o>zz")
 vim.keymap.set("n", "<C-i>", "<C-i>zz")
 
 vim.keymap.set({"n", "v"}, "<leader>y", '"+y', {desc = "Copy to system clipboard"})
+
+vim.keymap.set({"n", "x"}, "c", '"_c', {desc = "Change without yanking"})
+vim.keymap.set(
+  {"n"},
+  "x",
+  function()
+    if vim.fn.col(".") == 1 then
+      local line = vim.fn.getline(".")
+      if line:match("^%s*$") then
+        vim.api.nvim_feedkeys('"_dd', "n", false)
+        vim.api.nvim_feedkeys("$", "n", false)
+      else
+        vim.api.nvim_feedkeys('"_x', "n", false)
+      end
+    else
+      vim.api.nvim_feedkeys('"_x', "n", false)
+    end
+  end,
+  {desc = "Delete character without yanking"}
+)
 
 -- ------------------------------------------------------------------------------------------------
 -- #Autocommands
