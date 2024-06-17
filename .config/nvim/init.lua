@@ -56,6 +56,13 @@ local icons = {
     Value = " ",
     Variable = " ",
   },
+  operations = {
+    buffer = "󰭷 ",
+    code = " ",
+    find = "󰈞 ",
+    debug = " ",
+    git = "󰊢 ",
+  },
 }
 
 local filepath = vim.fn.expand("%")
@@ -131,6 +138,7 @@ table.insert(plugins, {
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-path",
     "saadparwaiz1/cmp_luasnip",
+    "lukas-reineke/cmp-under-comparator",
     {
       "zbirenbaum/copilot-cmp",
       config = function()
@@ -207,11 +215,16 @@ table.insert(plugins, {
           return item
         end,
       },
-      -- experimental = {
-      --   ghost_text = {
-      --     hl_group = "LspCodeLens",
-      --   },
-      -- },
+      sorting = {
+        comparators = {
+          cmp.config.compare.offset,
+          cmp.config.compare.exact,
+          cmp.config.compare.score,
+          cmp.config.compare.recently_used,
+          require("cmp-under-comparator").under,
+          cmp.config.compare.kind,
+        },
+      },
     })
   end,
 })
@@ -265,6 +278,37 @@ table.insert(plugins, {
       },
     })
     vim.keymap.set({"n", "x", "o"}, "s", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
+  end,
+})
+table.insert(plugins, {
+  "folke/which-key.nvim",
+  event = "VeryLazy",
+  config = function()
+    vim.o.timeout = true
+    vim.o.timeoutlen = 1000
+    local whichkey = require("which-key")
+    whichkey.setup({
+      icons = {
+        group = "", -- we'll use custom icons
+      },
+      triggers_nowait = {
+        -- registers
+        '"',
+        "<c-r>",
+        -- spelling
+        "z=",
+      },
+      disable = {
+        filetypes = {"TelescopePrompt"},
+      }
+    })
+    whichkey.register({
+      ["<leader>b"] = {name = icons.operations.buffer .. "Buffer"},
+      ["<leader>c"] = {name = icons.operations.code .. "Code"},
+      ["<leader>d"] = {name = icons.operations.code .. "Debug"},
+      ["<leader>f"] = {name = icons.operations.find .. "Find"},
+      ["<leader>g"] = {name = icons.operations.git .. "Git"},
+    })
   end,
 })
 
@@ -483,7 +527,7 @@ table.insert(plugins, {
         position = "right_align",
       },
       mappings = {
-        code_action = "<leader>ca",
+        code_action = {"<leader>ca", "Code action"},
       },
     })
   end,
@@ -571,15 +615,14 @@ table.insert(plugins, {
   version = "1.1.1",
   config = function()
     require("git-conflict").setup({
-      default_mappings = {
-        ours = "<leader>ho",
-        theirs = "<leader>ht",
-        both = "<leader>hh",
-        none = "<leader>h0",
-        next = "go",
-        prev = "gp",
-      },
+      default_mappings = false,
     })
+    vim.keymap.set("n", "<leader>gco", "<cmd>GitConflictChooseOurs<cr>", {desc = "Git conflict choose ours"})
+    vim.keymap.set("n", "<leader>gct", "<cmd>GitConflictChooseTheirs<cr>", {desc = "Git conflict choose theirs"})
+    vim.keymap.set("n", "<leader>gcb", "<cmd>GitConflictChooseBoth<cr>", {desc = "Git conflict choose both"})
+    vim.keymap.set("n", "<leader>gc0", "<cmd>GitConflictChooseNone<cr>", {desc = "Git conflict choose none"})
+    vim.keymap.set("n", "go", "<cmd>GitConflictNextConflict<cr>", {desc = "Git conflict jump next"})
+    vim.keymap.set("n", "gp", "<cmd>GitConflictPrevConflict<cr>", {desc = "Git conflict jump prev"})
   end,
 })
 table.insert(plugins, {
@@ -587,9 +630,9 @@ table.insert(plugins, {
   config = function()
     local gitsigns = require("gitsigns")
     gitsigns.setup()
-    vim.keymap.set("n", "<leader>hb", gitsigns.blame_line, {desc = "Git blame line"})
-    vim.keymap.set("n", "<leader>hB", function() gitsigns.blame_line({full = true}) end, {desc = "Git blame line (full)"})
-    vim.keymap.set("n", "<leader>hd", gitsigns.diffthis, {desc = "Git diff line"})
+    vim.keymap.set("n", "<leader>gb", gitsigns.blame_line, {desc = "Git blame line"})
+    vim.keymap.set("n", "<leader>gB", function() gitsigns.blame_line({full = true}) end, {desc = "Git blame line (full)"})
+    vim.keymap.set("n", "<leader>gd", gitsigns.diffthis, {desc = "Git diff line"})
   end,
 })
 
