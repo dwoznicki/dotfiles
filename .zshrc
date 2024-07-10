@@ -12,6 +12,7 @@ export NVM_DIR="$HOME/.nvm"
 export EDITOR="nvim"
 
 # Enable autocomplete.
+FPATH="$HOME/.zfunc:${FPATH}"
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|=*' 'l:|=* r:|=*'
 autoload -Uz compinit && compinit
 
@@ -26,3 +27,9 @@ alias ll="ls -la"
 
 # Add local bin to path.
 export PATH="$PATH:$HOME/.local/bin/"
+. "$HOME/.cargo/env"
+
+# Set up pyenv.
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
