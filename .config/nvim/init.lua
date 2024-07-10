@@ -169,7 +169,7 @@ table.insert(plugins, {
         ["<Tab>"] = cmp.mapping(function(fallback)
           if cmp.visible() then
             cmp.select_next_item()
-          elseif luasnip.expand_or_jumpable() then
+          elseif luasnip.expand_or_locally_jumpable() then
             luasnip.expand_or_jump()
           elseif has_words_before() then
             cmp.complete()
@@ -236,14 +236,8 @@ table.insert(plugins, {
       require("luasnip.loaders.from_vscode").lazy_load()
     end,
   },
-  -- keys = function()
-  --   -- Disable keymap so we can set up supertab in nvim-cmp
-  --   ---@type string[]
-  --   return {}
-  -- end,
   config = function()
     require("luasnip").setup({
-      history = true,
       region_check_events = "CursorMoved",
       delete_check_events = "TextChanged",
     })
@@ -446,9 +440,6 @@ table.insert(plugins, {
         },
       },
     })
-    lspconfig.rust_analyzer.setup({
-      capabilities = vim.deepcopy(capabilities),
-    })
     lspconfig.tailwindcss.setup({
       capabilities = vim.deepcopy(capabilities),
     })
@@ -572,6 +563,7 @@ table.insert(plugins, {
         }
       },
     }
+
     dap_ui.setup({
       layouts = {
         {
@@ -988,6 +980,14 @@ table.insert(plugins, {
       end,
     })
   end,
+})
+
+-- ------------------------------------------------------------------------------------------------
+-- #Language specific
+table.insert(plugins, {
+  "mrcjkb/rustaceanvim",
+  version = "^4",
+  lazy = false,
 })
 
 require("lazy").setup(plugins)
