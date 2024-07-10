@@ -322,14 +322,21 @@ table.insert(plugins, {
       indent = {
         enable = true,
       },
+      incremental_selection = {
+        enable = true,
+        keymaps = {
+          init_selection = "<leader>=",
+          node_incremental = "<leader>=",
+          scope_incremental = false,
+          node_decremental = "<leader>-",
+        },
+      },
     })
   end,
 })
 table.insert(plugins, {
   "nvim-treesitter/nvim-treesitter-context",
-  dependencies = {
-    "nvim-treesitter/nvim-treesitter",
-  },
+  dependencies = {"nvim-treesitter/nvim-treesitter"},
   config = function()
     require("treesitter-context").setup({
       multiline_threshold = 1,
@@ -345,6 +352,44 @@ table.insert(plugins, {
     })
     vim.keymap.set("n", "<leader>j", "<cmd>lua require('treesj').toggle()<cr>", {desc = "Split join"})
   end,
+})
+table.insert(plugins, {
+  "nvim-treesitter/nvim-treesitter-textobjects",
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+  },
+  event = "VeryLazy",
+  config = function()
+    require("nvim-treesitter.configs").setup({
+      textobjects = {
+        select = {
+          enable = true,
+          -- Automatically jump forward to textobject.
+          lookahead = true,
+          keymaps = {
+            ["af"] = {query = "@function.outer", desc = "Select outer function/method"},
+            ["if"] = {query = "@function.inner", desc = "Select inner function/method"},
+            ["ai"] = {query = "@conditional.outer", desc = "Select outer conditional"},
+            ["ii"] = {query = "@conditional.inner", desc = "Select inner conditional"},
+            ["al"] = {query = "@loop.outer", desc = "Select outer loop"},
+            ["il"] = {query = "@loop.inner", desc = "Select inner loop"},
+            ["ac"] = {query = "@comment.outer", desc = "Select outer comment"},
+            ["ic"] = {query = "@comment.inner", desc = "Select inner comment"},
+          },
+          selection_modes = function()
+            return "V"
+          end,
+        },
+        lsp_interop = {
+          enable = true,
+          peek_definition_code = {
+            ["<leader>kf"] = "@function.outer",
+            ["<leader>kc"] = "@class.outer",
+          },
+        },
+      },
+    })
+  end
 })
 
 -- ----------------------------------------------------------------------------------------------
