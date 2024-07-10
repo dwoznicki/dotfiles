@@ -367,14 +367,16 @@ table.insert(plugins, {
           -- Automatically jump forward to textobject.
           lookahead = true,
           keymaps = {
-            ["af"] = {query = "@function.outer", desc = "Select outer function/method"},
-            ["if"] = {query = "@function.inner", desc = "Select inner function/method"},
-            ["ai"] = {query = "@conditional.outer", desc = "Select outer conditional"},
-            ["ii"] = {query = "@conditional.inner", desc = "Select inner conditional"},
-            ["al"] = {query = "@loop.outer", desc = "Select outer loop"},
-            ["il"] = {query = "@loop.inner", desc = "Select inner loop"},
-            ["ac"] = {query = "@comment.outer", desc = "Select outer comment"},
-            ["ic"] = {query = "@comment.inner", desc = "Select inner comment"},
+            ["af"] = {query = "@function.outer", desc = "outer function/method"},
+            ["if"] = {query = "@function.inner", desc = "inner function/method"},
+            ["ai"] = {query = "@conditional.outer", desc = "outer conditional"},
+            ["ii"] = {query = "@conditional.inner", desc = "inner conditional"},
+            ["al"] = {query = "@loop.outer", desc = "outer loop"},
+            ["il"] = {query = "@loop.inner", desc = "inner loop"},
+            ["ac"] = {query = "@comment.outer", desc = "outer comment"},
+            ["ic"] = {query = "@comment.inner", desc = "inner comment"},
+            ["aC"] = {query = "@class.outer", desc = "outer class"},
+            ["iC"] = {query = "@class.inner", desc = "inner class"},
           },
           selection_modes = function()
             return "V"
@@ -1156,7 +1158,8 @@ vim.keymap.set(
   {desc = "Delete character without yanking"}
 )
 
-vim.keymap.set("v", "//", "y/\\V<C-R>=escape(@\",'/\')<cr><cr>N", {desc = "Search visual selection"})
+vim.keymap.set("v", "gw", "y/\\V<C-R>=escape(@\",'/\')<cr><cr>N", {desc = "Search for visual selection"})
+vim.keymap.set("v", "/", "o<esc>/\\%V", {desc = "Search within visual selection"})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Autocommands
