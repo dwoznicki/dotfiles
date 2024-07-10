@@ -1093,7 +1093,7 @@ vim.keymap.set({"n", "v"}, "<leader>y", '"+y', {desc = "Copy to system clipboard
 
 vim.keymap.set({"n", "x"}, "c", '"_c', {desc = "Change without yanking"})
 vim.keymap.set(
-  {"n"},
+  "n",
   "x",
   function()
     if vim.fn.col(".") == 1 then
@@ -1110,6 +1110,8 @@ vim.keymap.set(
   end,
   {desc = "Delete character without yanking"}
 )
+
+vim.keymap.set("v", "//", "y/\\V<C-R>=escape(@\",'/\')<cr><cr>N", {desc = "Search visual selection"})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Autocommands
