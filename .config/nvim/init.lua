@@ -62,6 +62,7 @@ local icons = {
     find = "󰈞 ",
     debug = " ",
     git = "󰊢 ",
+    peek = "󰈈 ",
   },
 }
 
@@ -278,30 +279,26 @@ table.insert(plugins, {
   "folke/which-key.nvim",
   event = "VeryLazy",
   config = function()
-    vim.o.timeout = true
-    vim.o.timeoutlen = 1000
     local whichkey = require("which-key")
     whichkey.setup({
+      delay = 1000,
       icons = {
-        group = "", -- we'll use custom icons
+        -- Disable icons. We'll use our own.
+        group = "",
+        rules = false,
+        colors = false,
       },
-      triggers_nowait = {
-        -- registers
-        '"',
-        "<c-r>",
-        -- spelling
-        "z=",
+      spec = {
+        {"<leader>b", group = icons.operations.buffer .. "Buffer"},
+        {"<leader>c", group = icons.operations.code .. "Code"},
+        {"<leader>d", group = icons.operations.debug .. "Debug"},
+        {"<leader>f", group = icons.operations.find .. "Find"},
+        {"<leader>g", group = icons.operations.git .. "Git"},
+        {"<leader>k", group = icons.operations.peek .. "Peek"},
       },
       disable = {
-        filetypes = {"TelescopePrompt"},
+        ft = {"TelescopePrompt"},
       }
-    })
-    whichkey.register({
-      ["<leader>b"] = {name = icons.operations.buffer .. "Buffer"},
-      ["<leader>c"] = {name = icons.operations.code .. "Code"},
-      ["<leader>d"] = {name = icons.operations.code .. "Debug"},
-      ["<leader>f"] = {name = icons.operations.find .. "Find"},
-      ["<leader>g"] = {name = icons.operations.git .. "Git"},
     })
   end,
 })
@@ -480,9 +477,6 @@ table.insert(plugins, {
             typeCheckingMode = "basic",
             pythonPath = "/opt/homebrew/bin/python3",
             extraPaths = python_extra_paths,
-            -- extraPaths = {
-            --   "~/OrbStack/docker/volumes/backend_python_packages_312",
-            -- },
           },
         },
       },

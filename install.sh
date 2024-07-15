@@ -19,7 +19,7 @@ if [ $OSNAME == "macos" ]; then
         echo "Unable to find homebrew." >&2
         exit 1
     fi
-    brew install neovim fd ripgrep
+    brew install neovim fd ripgrep fzf
 elif [ $OSNAME == "linux" ]; then
     # Install the following packages:
     # - ripgrep: grep alternative
