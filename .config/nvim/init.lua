@@ -841,6 +841,16 @@ table.insert(plugins, {
           tresitter = false, -- no treesitter highlighting (it's slow)
         },
         path_display = {"truncate"},
+        vimgrep_arguments = {
+          "rg",
+          "--color=never",
+          "--no-heading",
+          "--with-filename",
+          "--line-number",
+          "--column",
+          "--smart-case",
+          "--fixed-strings", -- no regex tokens
+        },
       },
     })
     require("telescope").load_extension("fzf")
