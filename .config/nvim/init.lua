@@ -146,6 +146,7 @@ table.insert(plugins, {
 })
 table.insert(plugins, {
   "hrsh7th/nvim-cmp",
+  enabled = true,
   version = false, -- Doesn't use releases
   event = "InsertEnter",
   dependencies = {
@@ -424,6 +425,7 @@ table.insert(plugins, {
       vim.lsp.protocol.make_client_capabilities(),
       require("cmp_nvim_lsp").default_capabilities()
     )
+    -- local capabilities = vim.lsp.protocol.make_client_capabilities()
     lspconfig.jsonls.setup({
       capabilities = vim.deepcopy(capabilities),
     })
@@ -960,7 +962,7 @@ table.insert(plugins, {
         ["q"] = "actions.close",
       },
       view_options = {
-        show_hidden_files = true,
+        show_hidden = true,
       },
     })
     local function open_oil()
