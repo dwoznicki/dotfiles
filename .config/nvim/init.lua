@@ -1037,16 +1037,6 @@ table.insert(plugins, {
   lazy = false,
 })
 
-table.insert(plugins, {
-  "bufhopper.nvim",
-  dev = true,
-  config = function()
-    local bufhopper = require("bufhopper")
-    bufhopper.setup()
-    vim.keymap.set("n", "<leader>u", bufhopper.open, {noremap = true, desc = "Open bufhopper"})
-  end,
-})
-
 require("lazy").setup({
   spec = plugins,
   dev = {
