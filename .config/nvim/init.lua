@@ -397,12 +397,7 @@ table.insert(plugins, {
   "neovim/nvim-lspconfig",
   event = {"BufReadPre", "BufNewFile"},
   dependencies = {
-    {
-      "folke/neodev.nvim",
-      config = function()
-        require("neodev").setup()
-      end,
-    },
+    "folke/lazydev.nvim",
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
     "hrsh7th/cmp-nvim-lsp",
@@ -448,21 +443,29 @@ table.insert(plugins, {
         },
       },
     })
-    lspconfig.tsserver.setup({
-      capabilities = vim.deepcopy(capabilities),
-      settings = {
-        diagnostics = {
-          -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-          ignoredCodes = {
-            80006,
+    if next(vim.fs.find({"deno.json"}, {upward = true, limit = 1})) ~= nil then
+      lspconfig.denols.setup({
+        capabilities = vim.deepcopy(capabilities),
+      })
+    else
+      lspconfig.tsserver.setup({
+        capabilities = vim.deepcopy(capabilities),
+        settings = {
+          diagnostics = {
+            -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+            ignoredCodes = {
+              80006,
+            },
           },
         },
-      },
-    })
-    lspconfig.eslint.setup({
-      capabilities = vim.deepcopy(capabilities),
-      filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
-    })
+      })
+    end
+    if next(vim.fs.find({".eslintrc", ".eslintrc.json", ".eslintrc.js", ".eslintrc.cjs"}, {upward = true, limit = 1})) ~= nil then
+      lspconfig.eslint.setup({
+        capabilities = vim.deepcopy(capabilities),
+        filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
+      })
+    end
     local python_extra_paths = {}
     if string.find(filepath, "outset%-ai/webrtc") then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/webrtc_python312_packages")
@@ -482,6 +485,9 @@ table.insert(plugins, {
       },
     })
     lspconfig.tailwindcss.setup({
+      capabilities = vim.deepcopy(capabilities),
+    })
+    lspconfig.clangd.setup({
       capabilities = vim.deepcopy(capabilities),
     })
 
@@ -947,7 +953,7 @@ table.insert(plugins, {
         ["q"] = "actions.close",
       },
       view_options = {
-        show_hidden_files = true,
+        show_hidden = true,
       },
     })
     local function open_oil()
@@ -1031,7 +1037,23 @@ table.insert(plugins, {
   lazy = false,
 })
 
-require("lazy").setup(plugins)
+table.insert(plugins, {
+  "bufhopper.nvim",
+  dev = true,
+  config = function()
+    local bufhopper = require("bufhopper")
+    bufhopper.setup()
+    vim.keymap.set("n", "<leader>u", bufhopper.open, {noremap = true, desc = "Open bufhopper"})
+  end,
+})
+
+require("lazy").setup({
+  spec = plugins,
+  dev = {
+    path = "~/projects",
+    fallback = false,
+  },
+})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Options
