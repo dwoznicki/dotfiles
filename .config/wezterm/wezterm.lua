@@ -19,5 +19,6 @@ config.keys = {
     {key = "RightArrow", mods = "SHIFT|OPT", action = wezterm.action.MoveTabRelative(1)},
 }
 config.audible_bell = "Disabled"
+config.scrollback_lines = 100000
 
 return config

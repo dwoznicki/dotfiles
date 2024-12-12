@@ -29,15 +29,23 @@ alias ll="ls -la"
 
 # Add local bin to path.
 export PATH="$PATH:$HOME/.local/bin/"
-. "$HOME/.cargo/env"
+
+# Load cargo.
+[ -e "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
 # Set up pyenv.
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-
-# Set up fzf.
-source <(fzf --zsh)
+which pyenv > /dev/null
+if [ $? -eq 0 ]; then
+    export PYENV_ROOT="$HOME/.pyenv"
+    [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+fi
 
 # Load deno.
 [ -d "/Users/danwoz/.deno/" ] && . "/Users/danwoz/.deno/env"
+
+# Set up fzf.
+which fzf > /dev/null
+if [ $? -eq 0 ]; then
+    source <(fzf --zsh)
+fi

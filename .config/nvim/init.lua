@@ -63,12 +63,28 @@ local icons = {
     debug = " ",
     git = "󰊢 ",
     peek = "󰈈 ",
+    flash = " ",
+    toolbox = "󰦬 ",
   },
 }
 
-local filepath = vim.fn.expand("%")
+local Project = {
+  UNSET = 0,
+  OUTSET_BACKEND = 1,
+  OUTSET_FRONTEND = 2,
+  OUTSET_WEBRTC = 3,
+}
+local filepath = vim.fn.expand("%:p")
 if filepath == "" or filepath == nil then
   filepath = vim.fn.getcwd()
+end
+local project = Project.UNSET
+if string.find(filepath, "outset%-ai/webrtc") then
+  project = Project.OUTSET_WEBRTC
+elseif string.find(filepath, "outset%-ai/backend") then
+  project = Project.OUTSET_BACKEND
+elseif string.find(filepath, "outset%-ai/frontend") then
+  project = Project.OUTSET_FRONTEND
 end
 
 local plugins = {}
@@ -132,6 +148,7 @@ table.insert(plugins, {
 })
 table.insert(plugins, {
   "hrsh7th/nvim-cmp",
+  enabled = true,
   version = false, -- Doesn't use releases
   event = "InsertEnter",
   dependencies = {
@@ -140,12 +157,6 @@ table.insert(plugins, {
     "hrsh7th/cmp-path",
     "saadparwaiz1/cmp_luasnip",
     "lukas-reineke/cmp-under-comparator",
-    {
-      "zbirenbaum/copilot-cmp",
-      config = function()
-        require("copilot_cmp").setup()
-      end,
-    },
   },
   config = function()
     local has_words_before = function()
@@ -202,7 +213,6 @@ table.insert(plugins, {
         ["<C-b>"] = cmp.mapping.scroll_docs(-4),
       },
       sources = cmp.config.sources({
-        {name = "copilot"},
         {name = "nvim_lsp"},
         {name = "luasnip"},
         {name = "buffer"},
@@ -247,13 +257,14 @@ table.insert(plugins, {
 table.insert(plugins, {
   "zbirenbaum/copilot.lua",
   cmd = "Copilot",
+  event = "InsertEnter",
   config = function()
     require("copilot").setup({
       panel = {
         enabled = false,
       },
       suggestion = {
-        enabled = false,
+        enabled = true,
       },
     })
   end,
@@ -272,7 +283,18 @@ table.insert(plugins, {
         },
       },
     })
-    vim.keymap.set({"n", "x", "o"}, "s", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
+    vim.keymap.set({"n", "x", "o"}, "<leader>s", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
+  end,
+})
+table.insert(plugins, {
+  "gbprod/substitute.nvim",
+  config = function()
+    local substitute = require("substitute")
+    substitute.setup()
+    vim.keymap.set("n", "s", substitute.operator, {noremap = true})
+    vim.keymap.set("n", "ss", substitute.line, {noremap = true})
+    vim.keymap.set("n", "S", substitute.eol, {noremap = true})
+    vim.keymap.set("x", "S", substitute.visual, {noremap = true})
   end,
 })
 table.insert(plugins, {
@@ -295,6 +317,8 @@ table.insert(plugins, {
         {"<leader>f", group = icons.operations.find .. "Find"},
         {"<leader>g", group = icons.operations.git .. "Git"},
         {"<leader>k", group = icons.operations.peek .. "Peek"},
+        {"<leader>s", group = icons.operations.flash .. "Flash"},
+        {"<leader>t", group = icons.operations.toolbox .. "Toolbox"},
       },
       disable = {
         ft = {"TelescopePrompt"},
@@ -411,6 +435,7 @@ table.insert(plugins, {
       vim.lsp.protocol.make_client_capabilities(),
       require("cmp_nvim_lsp").default_capabilities()
     )
+    -- local capabilities = vim.lsp.protocol.make_client_capabilities()
     lspconfig.jsonls.setup({
       capabilities = vim.deepcopy(capabilities),
     })
@@ -467,9 +492,9 @@ table.insert(plugins, {
       })
     end
     local python_extra_paths = {}
-    if string.find(filepath, "outset%-ai/webrtc") then
-      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/webrtc_python312_packages")
-    elseif string.find(filepath, "outset%-ai/backend") then
+    if project == Project.OUTSET_WEBRTC then
+      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/webrtc_python311_packages")
+    elseif project == Project.OUTSET_BACKEND then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/backend_python_packages_312")
     end
     lspconfig.pyright.setup({
@@ -837,6 +862,16 @@ table.insert(plugins, {
           tresitter = false, -- no treesitter highlighting (it's slow)
         },
         path_display = {"truncate"},
+        vimgrep_arguments = {
+          "rg",
+          "--color=never",
+          "--no-heading",
+          "--with-filename",
+          "--line-number",
+          "--column",
+          "--smart-case",
+          "--fixed-strings", -- no regex tokens
+        },
       },
     })
     require("telescope").load_extension("fzf")
@@ -940,6 +975,11 @@ table.insert(plugins, {
         "<cmd>Telescope keymaps<cr>",
         desc = "Keymaps",
       },
+      {
+        "<leader>fw",
+        "<cmd>Telescope lsp_workspace_symbols<cr>",
+        desc = "Workspace symbols",
+      },
     }
   end,
 })
@@ -1028,6 +1068,54 @@ table.insert(plugins, {
     })
   end,
 })
+table.insert(plugins, {
+  "DanWlker/toolbox.nvim",
+  config = function()
+    require("toolbox").setup({
+      commands = {
+        {
+          name = "Copy pytest path to clipboard",
+          execute = function()
+            local relative_path, _ = vim.fn.expand("%:p"):gsub(".*/backend", "backend", 1)
+            local class_name = nil
+            local function_name = nil
+            local bufnr = vim.api.nvim_get_current_buf()
+            local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+            row = row - 1
+            local parser = vim.treesitter.get_parser(bufnr, "python")
+            local tree = parser:parse()[1]
+            local root = tree:root()
+            local node = root:descendant_for_range(row, col, row, col)
+            while node do
+              if node:type() == "class_definition" then
+                local name_node = node:field("name")[1]
+                if name_node then
+                  class_name = vim.treesitter.get_node_text(name_node, bufnr)
+                end
+              elseif node:type() == "function_definition" then
+                local name_node = node:field("name")[1]
+                if name_node then
+                  function_name = vim.treesitter.get_node_text(name_node, bufnr)
+                end
+              end
+              node = node:parent()
+            end
+            local pytest_path = relative_path
+            if class_name then
+              pytest_path = pytest_path .. "::" .. class_name
+            end
+            if class_name and function_name then
+              pytest_path = pytest_path .. "::" .. function_name
+            end
+            vim.fn.setreg("+", pytest_path)
+            print("Copied \"" .. pytest_path .. "\" to clipboard")
+          end,
+        },
+      },
+    })
+    vim.keymap.set({"n", "v"}, "<leader>t", require("toolbox").show_picker)
+  end,
+})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Language specific
@@ -1070,10 +1158,15 @@ vim.opt.scrolloff = 10 -- Lines of context
 vim.opt.sidescrolloff = 8 -- Columns of context
 -- Indenting
 vim.opt.expandtab = true -- Use spaces instead of tabs
-vim.opt.shiftwidth = 4 -- Size of an indent
 vim.opt.shiftround = true -- Round indent to nearest shiftwidth
-vim.opt.tabstop = 4 -- Number of spaces tabs count for
 vim.opt.smartindent = true -- Insert indents automatically
+if project == Project.OUTSET_FRONTEND then
+  vim.opt.shiftwidth = 2 -- Size of an indent
+  vim.opt.tabstop = 2 -- Number of spaces tabs count for
+else
+  vim.opt.shiftwidth = 4 -- Size of an indent
+  vim.opt.tabstop = 4 -- Number of spaces tabs count for
+end
 -- Window splitting
 vim.opt.splitbelow = true -- Put new windows below current
 vim.opt.splitright = true -- Put new windows right of current
