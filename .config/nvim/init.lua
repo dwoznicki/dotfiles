@@ -283,7 +283,7 @@ table.insert(plugins, {
         },
       },
     })
-    vim.keymap.set({"n", "x", "o"}, "<leader>s", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
+    vim.keymap.set("n", "ss", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
   end,
 })
 table.insert(plugins, {
@@ -292,9 +292,8 @@ table.insert(plugins, {
     local substitute = require("substitute")
     substitute.setup()
     vim.keymap.set("n", "s", substitute.operator, {noremap = true})
-    vim.keymap.set("n", "ss", substitute.line, {noremap = true})
-    vim.keymap.set("n", "S", substitute.eol, {noremap = true})
-    vim.keymap.set("x", "S", substitute.visual, {noremap = true})
+    vim.keymap.set("n", "S", substitute.line, {noremap = true})
+    vim.keymap.set({"v", "x"}, "s", substitute.visual, {noremap = true})
   end,
 })
 table.insert(plugins, {
@@ -317,7 +316,6 @@ table.insert(plugins, {
         {"<leader>f", group = icons.operations.find .. "Find"},
         {"<leader>g", group = icons.operations.git .. "Git"},
         {"<leader>k", group = icons.operations.peek .. "Peek"},
-        {"<leader>s", group = icons.operations.flash .. "Flash"},
         {"<leader>t", group = icons.operations.toolbox .. "Toolbox"},
       },
       disable = {
