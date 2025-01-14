@@ -419,12 +419,7 @@ table.insert(plugins, {
   "neovim/nvim-lspconfig",
   event = {"BufReadPre", "BufNewFile"},
   dependencies = {
-    {
-      "folke/neodev.nvim",
-      config = function()
-        require("neodev").setup()
-      end,
-    },
+    "folke/lazydev.nvim",
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
     "hrsh7th/cmp-nvim-lsp",
@@ -471,21 +466,29 @@ table.insert(plugins, {
         },
       },
     })
-    lspconfig.tsserver.setup({
-      capabilities = vim.deepcopy(capabilities),
-      settings = {
-        diagnostics = {
-          -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
-          ignoredCodes = {
-            80006,
+    if next(vim.fs.find({"deno.json"}, {upward = true, limit = 1})) ~= nil then
+      lspconfig.denols.setup({
+        capabilities = vim.deepcopy(capabilities),
+      })
+    else
+      lspconfig.tsserver.setup({
+        capabilities = vim.deepcopy(capabilities),
+        settings = {
+          diagnostics = {
+            -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
+            ignoredCodes = {
+              80006,
+            },
           },
         },
-      },
-    })
-    lspconfig.eslint.setup({
-      capabilities = vim.deepcopy(capabilities),
-      filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
-    })
+      })
+    end
+    if next(vim.fs.find({".eslintrc", ".eslintrc.json", ".eslintrc.js", ".eslintrc.cjs"}, {upward = true, limit = 1})) ~= nil then
+      lspconfig.eslint.setup({
+        capabilities = vim.deepcopy(capabilities),
+        filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
+      })
+    end
     local python_extra_paths = {}
     if project == Project.OUTSET_WEBRTC then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/webrtc_python311_packages")
@@ -505,6 +508,9 @@ table.insert(plugins, {
       },
     })
     lspconfig.tailwindcss.setup({
+      capabilities = vim.deepcopy(capabilities),
+    })
+    lspconfig.clangd.setup({
       capabilities = vim.deepcopy(capabilities),
     })
 
@@ -1117,7 +1123,13 @@ table.insert(plugins, {
   lazy = false,
 })
 
-require("lazy").setup(plugins)
+require("lazy").setup({
+  spec = plugins,
+  dev = {
+    path = "~/projects",
+    fallback = false,
+  },
+})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Options

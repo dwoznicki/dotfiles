@@ -1,3 +1,5 @@
+# Add deno completions to search path
+if [[ ":$FPATH:" != *":/Users/danwoz/.zsh/completions:"* ]]; then export FPATH="/Users/danwoz/.zsh/completions:$FPATH"; fi
 # Enable homebrew.
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -38,6 +40,9 @@ if [ $? -eq 0 ]; then
     [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
 fi
+
+# Load deno.
+[ -d "/Users/danwoz/.deno/" ] && . "/Users/danwoz/.deno/env"
 
 # Set up fzf.
 which fzf > /dev/null
