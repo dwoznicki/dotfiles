@@ -503,6 +503,7 @@ table.insert(plugins, {
             typeCheckingMode = "basic",
             pythonPath = "/opt/homebrew/bin/python3",
             extraPaths = python_extra_paths,
+            stubPath = "/opt/homebrew/lib/python3.13/site-packages",
           },
         },
       },
