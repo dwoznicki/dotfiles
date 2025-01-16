@@ -104,10 +104,6 @@ table.insert(plugins, {
   "nvim-lua/plenary.nvim",
   lazy = true,
 })
-table.insert(plugins, {
-  -- Disable certain features for large files (default = 2MB).
-  "LunarVim/bigfile.nvim",
-})
 
 -- ----------------------------------------------------------------------------------------------
 -- #Editor plugins
@@ -521,13 +517,13 @@ table.insert(plugins, {
         go({severity = severity})
       end
     end
+    local snacks = require("snacks")
     vim.keymap.set("n", "<leader>cd", vim.diagnostic.open_float, {desc = "Line diagnostics"})
     vim.keymap.set("n", "<leader>cl", "<cmd>LspInfo<cr>", {desc = "Lsp info"})
-    vim.keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<cr>", {desc = "Goto definition"})
+    vim.keymap.set("n", "gd", function() snacks.picker.lsp_definitions() end, {desc = "Goto definition"})
     vim.keymap.set("n", "gD", vim.lsp.buf.declaration, {desc = "Goto declaration"})
-    vim.keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<cr>", {desc = "Goto type definition"})
-    vim.keymap.set("n", "gI", "<cmd>Telescope lsp_implementations<cr>", {desc = "Goto implementation"})
-    vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references show_line=false<cr>", {desc = "References"})
+    vim.keymap.set("n", "gt", function() snacks.picker.lsp_type_definitions() end, {desc = "Goto type definition"})
+    vim.keymap.set("n", "gr", function() snacks.picker.lsp_references() end, {desc = "References"})
     vim.keymap.set("n", "K", vim.lsp.buf.hover, {desc = "Hover"})
     vim.keymap.set("n", "gj", diagnostic_goto(true), {desc = "Next diagnostic"})
     vim.keymap.set("n", "gk", diagnostic_goto(false), {desc = "Prev diagnostic"})
@@ -779,207 +775,8 @@ table.insert(plugins, {
   end,
 })
 table.insert(plugins, {
-  "stevearc/dressing.nvim",
-  config = function()
-    require("dressing").setup({
-      input = {
-        -- Allow entering Normal mode.
-        insert_only = false,
-      },
-    })
-  end,
-})
-table.insert(plugins, {
   "nvim-tree/nvim-web-devicons",
   lazy = true,
-})
-table.insert(plugins, {
-  "lukas-reineke/indent-blankline.nvim",
-  event = {"BufReadPost", "BufNewFile"},
-  config = function()
-    require("ibl").setup({
-      indent = {
-        char = "▏",
-      },
-      whitespace = {
-        remove_blankline_trail = true,
-      },
-      scope = {
-        enabled = false,
-      },
-    })
-  end,
-})
-table.insert(plugins, {
-  "nvim-telescope/telescope-fzf-native.nvim",
-  build = "make"
-})
-table.insert(plugins, {
-  "nvim-telescope/telescope.nvim",
-  cmd = "Telescope",
-  dependencies = {
-    "nvim-lua/plenary.nvim",
-  },
-  config = function()
-    require("telescope").setup({
-      extensions = {
-        fzf = {
-          fuzzy = false,
-          override_generic_sorter = true,
-          override_file_sorter = true,
-          case_mode = "smart_case",
-        },
-      },
-      defaults = {
-        selection_caret = " ",
-        layout_strategy = "flex",
-        layout_config = {
-          flex = {
-            flip_columns = 130,
-            horizontal = {
-              preview_width = 0.5,
-            },
-            vertical = {
-              preview_height =  0.3,
-            },
-          },
-        },
-        cache_picker = {
-          num_pickers = 20,
-        },
-        mappings = {
-          n = {
-            ["q"] = function(...)
-              return require("telescope.actions").close(...)
-            end,
-          },
-        },
-        preview = {
-          filesize_limit = 2, -- 2MB
-          timeout = 200, -- 200ms
-          tresitter = false, -- no treesitter highlighting (it's slow)
-        },
-        path_display = {"truncate"},
-        vimgrep_arguments = {
-          "rg",
-          "--color=never",
-          "--no-heading",
-          "--with-filename",
-          "--line-number",
-          "--column",
-          "--smart-case",
-          "--fixed-strings", -- no regex tokens
-        },
-      },
-    })
-    require("telescope").load_extension("fzf")
-  end,
-  keys = function()
-    local function get_root()
-      local root_patterns = { ".git", "lua" }
-      ---@type string?
-      local path = vim.api.nvim_buf_get_name(0)
-      path = path ~= "" and vim.loop.fs_realpath(path) or nil
-      ---@type string[]
-      local roots = {}
-      if path then
-        for _, client in pairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
-          local workspace = client.config.workspace_folders
-          local paths = workspace and vim.tbl_map(function(ws)
-            return vim.uri_to_fname(ws.uri)
-          end, workspace) or client.config.root_dir and { client.config.root_dir } or {}
-          for _, p in ipairs(paths) do
-            local r = vim.loop.fs_realpath(p)
-            if path:find(r, 1, true) then
-              roots[#roots + 1] = r
-            end
-          end
-        end
-      end
-      table.sort(roots, function(a, b)
-        return #a > #b
-      end)
-      ---@type string?
-      local root = roots[1]
-      if not root then
-        path = path and vim.fs.dirname(path) or vim.loop.cwd()
-        ---@type string?
-        root = vim.fs.find(root_patterns, { path = path, upward = true })[1]
-        root = root and vim.fs.dirname(root) or vim.loop.cwd()
-      end
-      ---@cast root string
-      return root
-    end
-    local function telescope_fn(builtin, opts)
-      local params = { builtin = builtin, opts = opts }
-      return function()
-        builtin = params.builtin
-        opts = params.opts
-        opts = vim.tbl_deep_extend("force", {cwd = get_root()}, opts or {})
-        if builtin == "files" then
-          if vim.loop.fs_stat((opts.cwd or vim.loop.cwd()) .. "/.git") then
-            opts.show_untracked = true
-            builtin = "git_files"
-          else
-            builtin = "find_files"
-          end
-        end
-        require("telescope.builtin")[builtin](opts)
-      end
-    end
-    return {
-      {
-        "<leader>ff",
-        telescope_fn("files", {cwd = false, path_display = {"truncate"}}),
-        desc = "Find files (root)",
-      },
-      {
-        "<leader>fF",
-        telescope_fn("files"),
-        desc = "Find files (cwd)",
-      },
-      {
-        "<leader>fg",
-        telescope_fn("live_grep"),
-        desc = "Find in files (grep)",
-      },
-      {
-        "<leader>fG",
-        telescope_fn("grep_string"),
-        desc = "Find hovered string in files (grep)",
-      },
-      {
-        "<leader>fs",
-        "<cmd>Telescope buffers sort_mru=true sort_lastused=true<cr>",
-        desc = "Buffers",
-      },
-      {
-        "<leader>fa",
-        "<cmd>Telescope pickers<cr>",
-        desc = "Pickers",
-      },
-      {
-        "<leader>fr",
-        "<cmd>Telescope oldfiles<cr>",
-        desc = "Recent files",
-      },
-      {
-        "<leader>fC",
-        "<cmd>Telescope colorscheme enable_preview=true<cr>",
-        desc = "Color scheme picker",
-      },
-      {
-        "<leader>fK",
-        "<cmd>Telescope keymaps<cr>",
-        desc = "Keymaps",
-      },
-      {
-        "<leader>fw",
-        "<cmd>Telescope lsp_workspace_symbols<cr>",
-        desc = "Workspace symbols",
-      },
-    }
-  end,
 })
 table.insert(plugins, {
   "stevearc/oil.nvim",
@@ -1004,66 +801,6 @@ table.insert(plugins, {
       -- end)
     end
     vim.keymap.set("n", "<leader>fd", open_oil, {desc = "Open oil file explorer"})
-  end,
-})
-table.insert(plugins, {
-  "goolord/alpha-nvim",
-  event = "VimEnter",
-  opts = function()
-    local dashboard = require("alpha.themes.dashboard")
-    local logo = [[
-    ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
-    ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
-    ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
-    ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
-    ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
-    ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝
-    ]]
-
-    dashboard.section.header.val = vim.split(logo, "\n")
-    dashboard.section.buttons.val = {
-      dashboard.button("f", " " .. " Find file", ":Telescope find_files <CR>"),
-      dashboard.button("n", " " .. " New file", ":ene <BAR> startinsert <CR>"),
-      dashboard.button("r", " " .. " Recent files", ":Telescope oldfiles <CR>"),
-      dashboard.button("g", " " .. " Find text", ":Telescope live_grep <CR>"),
-      dashboard.button("c", " " .. " Config", ":e $MYVIMRC <CR>"),
-      dashboard.button("s", " " .. " Restore Session", [[:lua require("persistence").load() <cr>]]),
-      dashboard.button("l", "󰒲 " .. " Lazy", ":Lazy<CR>"),
-      dashboard.button("q", " " .. " Quit", ":qa<CR>"),
-    }
-    for _, button in ipairs(dashboard.section.buttons.val) do
-      button.opts.hl = "AlphaButtons"
-      button.opts.hl_shortcut = "AlphaShortcut"
-    end
-    dashboard.section.header.opts.hl = "AlphaHeader"
-    dashboard.section.buttons.opts.hl = "AlphaButtons"
-    dashboard.section.footer.opts.hl = "AlphaFooter"
-    dashboard.opts.layout[1].val = 8
-    return dashboard
-  end,
-  config = function(_, dashboard)
-    -- close Lazy and re-open when the dashboard is ready
-    if vim.o.filetype == "lazy" then
-      vim.cmd.close()
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "AlphaReady",
-        callback = function()
-          require("lazy").show()
-        end,
-      })
-    end
-
-    require("alpha").setup(dashboard.opts)
-
-    vim.api.nvim_create_autocmd("User", {
-      pattern = "LazyVimStarted",
-      callback = function()
-        local stats = require("lazy").stats()
-        local ms = (math.floor(stats.startuptime * 100 + 0.5) / 100)
-        dashboard.section.footer.val = "⚡ Neovim loaded " .. stats.count .. " plugins in " .. ms .. "ms"
-        pcall(vim.cmd.AlphaRedraw)
-      end,
-    })
   end,
 })
 table.insert(plugins, {
@@ -1115,20 +852,41 @@ table.insert(plugins, {
   end,
 })
 
+-- ----------------------------------------------------------------------------------------------
+-- #Snacks
+table.insert(plugins, {
+  "folke/snacks.nvim",
+  lazy = false,
+  config = function()
+    local snacks = require("snacks")
+    snacks.setup({
+      bigfile = {},
+      picker = {},
+      dashboard = {},
+      indent = {},
+      input = {},
+      lazygit = {},
+    })
+    vim.keymap.set("n", "<leader>ff", function() snacks.picker.files({hidden = true}) end, {desc = "Find files"})
+    vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
+    vim.keymap.set({"n", "x"}, "<leader>fG", function() snacks.picker.grep_word() end, {desc = "Search word"})
+    vim.keymap.set("n", "<leader>fs", function() snacks.picker.buffers() end, {desc = "Buffers"})
+    vim.keymap.set("n", "<leader>fa", function() snacks.picker.meta_pickers() end, {desc = "Open pickers"})
+    vim.keymap.set("n", "<leader>fr", function() snacks.picker.recent() end, {desc = "Recent files"})
+    vim.keymap.set("n", "<leader>fC", function() snacks.picker.colorschemes() end, {desc = "Color schemes"})
+    vim.keymap.set("n", "<leader>fK", function() snacks.picker.keymaps() end, {desc = "Keymaps"})
+    vim.keymap.set("n", "<leader>fw", function() snacks.picker.lsp_symbols() end, {desc = "Workspace symbols"})
+    vim.keymap.set("n", "<leader>gs", function() snacks.picker.git_status() end, {desc = "Git status"})
+    vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
+  end,
+})
+
 -- ------------------------------------------------------------------------------------------------
 -- #Language specific
 table.insert(plugins, {
   "mrcjkb/rustaceanvim",
   version = "^4",
   lazy = false,
-})
-
-require("lazy").setup({
-  spec = plugins,
-  dev = {
-    path = "~/projects",
-    fallback = false,
-  },
 })
 
 -- ------------------------------------------------------------------------------------------------
