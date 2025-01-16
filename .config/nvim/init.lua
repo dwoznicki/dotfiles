@@ -578,16 +578,13 @@ table.insert(plugins, {
   end,
 })
 table.insert(plugins, {
-  "luckasRanarison/clear-action.nvim",
+  "Chaitanyabsprip/fastaction.nvim",
   config = function()
-    require("clear-action").setup({
-      signs = {
-        position = "right_align",
-      },
-      mappings = {
-        code_action = {"<leader>ca", "Code action"},
-      },
+    local fastaction = require("fastaction")
+    fastaction.setup({
+      dismiss_keys = {"q", "<Esc>"},
     })
+    vim.keymap.set({"n", "x"}, "<leader>ca", fastaction.code_action, {desc = "Code action"})
   end,
 })
 table.insert(plugins, {
@@ -996,7 +993,27 @@ vim.keymap.set("v", ">", ">gv")
 vim.keymap.set("n", "<leader>ki", vim.show_pos, {desc = "Inspect position"})
 
 -- Close all buffers except for current one.
-vim.keymap.set("n", "<leader>bd", "<cmd>%bd | e# | bd#<cr>", {desc = "Close all buffers except current"})
+vim.keymap.set(
+  "n",
+  "<leader>bd",
+  function()
+    local curbuf = vim.api.nvim_get_current_buf()
+    local num_closed = 0
+    for _, openbuf in ipairs(vim.api.nvim_list_bufs()) do
+      if not vim.api.nvim_buf_is_loaded(openbuf) or vim.api.nvim_get_option_value("buftype", {buf = openbuf}) ~= "" then
+        goto continue
+      end
+      if openbuf == curbuf then
+        goto continue
+      end
+      vim.api.nvim_buf_delete(openbuf, {})
+      num_closed = num_closed + 1
+      ::continue::
+    end
+    print(num_closed .. " buffers closed")
+  end,
+  {desc = "Close all buffers except current"}
+)
 
 -- Nicer behavior for CTRL + o, CTRL + i.
 vim.keymap.set("n", "<C-o>", "<C-o>zz")
