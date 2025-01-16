@@ -891,6 +891,16 @@ table.insert(plugins, {
 })
 
 -- ------------------------------------------------------------------------------------------------
+-- #Setup lazy
+require("lazy").setup({
+  spec = plugins,
+  dev = {
+    path = "~/projects",
+    fallback = false,
+  },
+})
+
+-- ------------------------------------------------------------------------------------------------
 -- #Options
 vim.opt.autowrite = true -- Enable auto write
 vim.opt.completeopt = "menu,menuone,noselect"
