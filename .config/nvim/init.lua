@@ -497,9 +497,10 @@ table.insert(plugins, {
         python = {
           analysis = {
             typeCheckingMode = "basic",
-            pythonPath = "/opt/homebrew/bin/python3",
+            -- pythonPath = "/opt/homebrew/bin/python3",
             extraPaths = python_extra_paths,
-            stubPath = "/opt/homebrew/lib/python3.13/site-packages",
+            -- stubPath = "/opt/homebrew/lib/python3.13/site-packages",
+            stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
           },
         },
       },
@@ -859,9 +860,19 @@ table.insert(plugins, {
     local snacks = require("snacks")
     snacks.setup({
       bigfile = {},
-      picker = {},
+      picker = {
+        formatters = {
+          file = {
+            filename_first = true,
+          },
+        },
+      },
       dashboard = {},
-      indent = {},
+      indent = {
+        scope = {
+          enabled = false,
+        },
+      },
       input = {},
       lazygit = {},
     })
@@ -869,7 +880,7 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
     vim.keymap.set({"n", "x"}, "<leader>fG", function() snacks.picker.grep_word() end, {desc = "Search word"})
     vim.keymap.set("n", "<leader>fs", function() snacks.picker.buffers() end, {desc = "Buffers"})
-    vim.keymap.set("n", "<leader>fa", function() snacks.picker.meta_pickers() end, {desc = "Open pickers"})
+    vim.keymap.set("n", "<leader>fa", function() snacks.picker.pickers() end, {desc = "Open pickers"})
     vim.keymap.set("n", "<leader>fr", function() snacks.picker.recent() end, {desc = "Recent files"})
     vim.keymap.set("n", "<leader>fC", function() snacks.picker.colorschemes() end, {desc = "Color schemes"})
     vim.keymap.set("n", "<leader>fK", function() snacks.picker.keymaps() end, {desc = "Keymaps"})
