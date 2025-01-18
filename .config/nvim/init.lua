@@ -282,14 +282,21 @@ table.insert(plugins, {
     vim.keymap.set("n", "ss", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
   end,
 })
+-- table.insert(plugins, {
+--   "gbprod/substitute.nvim",
+--   config = function()
+--     local substitute = require("substitute")
+--     substitute.setup()
+--     vim.keymap.set("n", "s", substitute.operator, {noremap = true})
+--     vim.keymap.set("n", "S", substitute.line, {noremap = true})
+--     vim.keymap.set({"v", "x"}, "s", substitute.visual, {noremap = true})
+--   end,
+-- })
 table.insert(plugins, {
-  "gbprod/substitute.nvim",
+  "echasnovski/mini.surround",
   config = function()
-    local substitute = require("substitute")
-    substitute.setup()
-    vim.keymap.set("n", "s", substitute.operator, {noremap = true})
-    vim.keymap.set("n", "S", substitute.line, {noremap = true})
-    vim.keymap.set({"v", "x"}, "s", substitute.visual, {noremap = true})
+    local surround = require("mini.surround")
+    surround.setup()
   end,
 })
 table.insert(plugins, {
