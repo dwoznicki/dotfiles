@@ -893,6 +893,8 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fw", function() snacks.picker.lsp_symbols() end, {desc = "Workspace symbols"})
     vim.keymap.set("n", "<leader>gs", function() snacks.picker.git_status() end, {desc = "Git status"})
     vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
+    vim.keymap.set("n", "<leader>fj", function() snacks.picker.smart() end, {desc = "Smart files"})
+    vim.keymap.set("n", "<leader>fe", function() snacks.picker.resume() end, {desc = "Resume last picker"})
   end,
 })
 
