@@ -796,16 +796,15 @@ table.insert(plugins, {
         show_hidden = true,
       },
     })
-    local function open_oil()
-      oil.open()
-      -- local oil_util = require("oil.util")
-      -- require("oil.util").run_after_load(0, function()
-      --   if not oil_util.get_preview_win() then
-      --     oil.open_preview()
-      --   end
-      -- end)
-    end
-    vim.keymap.set("n", "<leader>fd", open_oil, {desc = "Open oil file explorer"})
+    vim.keymap.set("n", "<leader>fd", oil.open, {desc = "Open oil file explorer"})
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "OilEnter",
+      callback = vim.schedule_wrap(function(args)
+        if vim.api.nvim_get_current_buf() == args.data.buf and oil.get_cursor_entry() then
+          oil.open_preview()
+        end
+      end),
+    })
   end,
 })
 table.insert(plugins, {
