@@ -866,13 +866,7 @@ table.insert(plugins, {
     local snacks = require("snacks")
     snacks.setup({
       bigfile = {},
-      picker = {
-        formatters = {
-          file = {
-            filename_first = true,
-          },
-        },
-      },
+      picker = {},
       dashboard = {},
       indent = {
         scope = {
