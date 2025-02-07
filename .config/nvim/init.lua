@@ -343,6 +343,7 @@ table.insert(plugins, {
       },
       indent = {
         enable = true,
+        disable = {"tsx"},
       },
       incremental_selection = {
         enable = true,
