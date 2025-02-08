@@ -868,7 +868,19 @@ table.insert(plugins, {
     snacks.setup({
       bigfile = {},
       picker = {},
-      dashboard = {},
+      dashboard = {
+        preset = {
+          keys = {
+            {icon = " ", key = "f", desc = "Smart files", action = function() snacks.picker.smart() end},
+            {icon = " ", key = "g", desc = "Search text live", action = function() snacks.picker.grep() end},
+            {icon = " ", key = "r", desc = "Recent files", action = function() snacks.picker.recent() end},
+            {icon = " ", key = "c", desc = "Config", action = ":lua Snacks.dashboard.pick('files', {cwd = vim.fn.stdpath('config')})"},
+            {icon = " ", key = "s", desc = "Restore Session", section = "session"},
+            {icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil},
+            {icon = " ", key = "q", desc = "Quit", action = ":qa"},
+          },
+        },
+      },
       indent = {
         scope = {
           enabled = false,
