@@ -499,15 +499,27 @@ table.insert(plugins, {
     elseif project == Project.OUTSET_BACKEND then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/backend_python_packages_312")
     end
-    lspconfig.pyright.setup({
+    -- lspconfig.pyright.setup({
+    --   capabilities = vim.deepcopy(capabilities),
+    --   settings = {
+    --     python = {
+    --       analysis = {
+    --         typeCheckingMode = "basic",
+    --         -- pythonPath = "/opt/homebrew/bin/python3",
+    --         extraPaths = python_extra_paths,
+    --         -- stubPath = "/opt/homebrew/lib/python3.13/site-packages",
+    --         stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
+    --       },
+    --     },
+    --   },
+    -- })
+    lspconfig.basedpyright.setup({
       capabilities = vim.deepcopy(capabilities),
       settings = {
-        python = {
+        basedpyright = {
           analysis = {
             typeCheckingMode = "basic",
-            -- pythonPath = "/opt/homebrew/bin/python3",
             extraPaths = python_extra_paths,
-            -- stubPath = "/opt/homebrew/lib/python3.13/site-packages",
             stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
           },
         },
