@@ -828,6 +828,7 @@ table.insert(plugins, {
       commands = {
         {
           name = "Copy pytest path to clipboard",
+          weight = 10, -- prefer this one first
           execute = function()
             local relative_path, _ = vim.fn.expand("%:p"):gsub(".*/backend", "backend", 1)
             local class_name = nil
@@ -862,6 +863,88 @@ table.insert(plugins, {
             end
             vim.fn.setreg("+", pytest_path)
             print("Copied \"" .. pytest_path .. "\" to clipboard")
+          end,
+        },
+        {
+          name = "Format JSON block",
+          tags = {"format", "json"},
+          weight = -1,
+          execute = function()
+            local buf = vim.api.nvim_get_current_buf()
+            local start_pos = vim.fn.getpos("'<")
+            local end_pos   = vim.fn.getpos("'>")
+            if start_pos[2] ~= end_pos[2] then
+              error("Please select a single line of JSON.")
+            end
+            local start_row = start_pos[2]
+            local end_row = start_row
+            local line = vim.api.nvim_buf_get_lines(buf, start_row - 1, start_row, false)[1]
+            local json_text = string.sub(line, start_pos[3], end_pos[3])
+            local formatted_lines = vim.fn.systemlist("python3 -m json.tool", json_text)
+            if vim.v.shell_error ~= 0 then
+              error("Error formatting JSON. Please ensure it's valid JSON and python3 is installed.")
+            end
+            vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, formatted_lines)
+          end,
+        },
+        {
+          name = "Format text block with newlines",
+          tags = {"format", "newlines"},
+          weight = -2,
+          execute = function()
+            local buf = vim.api.nvim_get_current_buf()
+            -- Extract the selected text.
+            local start_pos = vim.fn.getpos("'<")
+            local end_pos = vim.fn.getpos("'>")
+            local start_row, start_col = start_pos[2], start_pos[3]
+            local end_row, end_col = end_pos[2], end_pos[3]
+            local lines = vim.api.nvim_buf_get_lines(buf, start_row - 1, end_row, false)
+            if #lines < 1 then
+              return
+            end
+            local selected_text = ""
+            if start_row == end_row then
+              selected_text = string.sub(lines[1], start_col, end_col)
+            else
+              lines[1] = string.sub(lines[1], start_col)
+              lines[#lines] = string.sub(lines[#lines], 1, end_col)
+              selected_text = table.concat(lines, "\n")
+            end
+            -- Replace '\n', '\r' literals with the real characters.
+            local formatted_text = selected_text:gsub("\\r", ""):gsub("\\n", "\n")
+            local new_lines = vim.split(formatted_text, "\n", {plain = true})
+            -- Replace the selected text with the formatted version.
+            if start_row == end_row then
+              local orig_line = vim.api.nvim_buf_get_lines(buf, start_row - 1, start_row, false)[1]
+              local new_line = string.sub(orig_line, 1, start_col - 1) .. new_lines[1] .. string.sub(orig_line, end_col + 1)
+              vim.api.nvim_buf_set_lines(buf, start_row - 1, start_row, false, {new_line})
+              if #new_lines > 1 then
+                ---@type string[]
+                local extra_lines = {}
+                for i = 2, #new_lines do
+                  table.insert(extra_lines, new_lines[i])
+                end
+                vim.api.nvim_buf_set_lines(buf, start_row, start_row, false, extra_lines)
+              end
+            else
+              local first_line = vim.api.nvim_buf_get_lines(buf, start_row - 1, start_row, false)[1]
+              local last_line  = vim.api.nvim_buf_get_lines(buf, end_row - 1, end_row, false)[1]
+              local prefix = string.sub(first_line, 1, start_col - 1)
+              local suffix = string.sub(last_line, end_col + 1)
+              local replaced = {}
+              if #new_lines == 0 then
+                replaced[1] = prefix .. suffix
+              elseif #new_lines == 1 then
+                replaced[1] = prefix .. new_lines[1] .. suffix
+              else
+                replaced[1] = prefix .. new_lines[1]
+                for i = 2, #new_lines - 1 do
+                  table.insert(replaced, new_lines[i])
+                end
+                table.insert(replaced, new_lines[#new_lines] .. suffix)
+              end
+              vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, replaced)
+            end
           end,
         },
       },
