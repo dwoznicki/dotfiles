@@ -710,6 +710,8 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>gb", gitsigns.blame_line, {desc = "Git blame line"})
     vim.keymap.set("n", "<leader>gB", function() gitsigns.blame_line({full = true}) end, {desc = "Git blame line (full)"})
     vim.keymap.set("n", "<leader>gd", gitsigns.diffthis, {desc = "Git diff line"})
+    vim.keymap.set("n", "gh", function() gitsigns.nav_hunk("next") end, {desc = "Goto next git hunk"})
+    vim.keymap.set("n", "gH", function() gitsigns.nav_hunk("prev") end, {desc = "Goto prev git hunk"})
   end,
 })
 
@@ -888,9 +890,49 @@ table.insert(plugins, {
           end,
         },
         {
+          name = "Compress JSON block",
+          tags = {"compress", "json"},
+          weight = -2,
+          execute = function()
+            local buf = vim.api.nvim_get_current_buf()
+            -- Extract the selected text.
+            local start_pos = vim.fn.getpos("'<")
+            local end_pos = vim.fn.getpos("'>")
+            local start_row, start_col = start_pos[2], start_pos[3]
+            local end_row, end_col = end_pos[2], end_pos[3]
+            local lines = vim.api.nvim_buf_get_lines(buf, start_row - 1, end_row, false)
+            if #lines < 1 then
+              return
+            end
+            local json_text = ""
+            if start_row == end_row then
+              json_text = string.sub(lines[1], start_col, end_col)
+            else
+              lines[1] = string.sub(lines[1], start_col)
+              lines[#lines] = string.sub(lines[#lines], 1, end_col)
+              json_text = table.concat(lines, "\n")
+            end
+            -- Compress the selected JSON text.
+            local compressed_output = vim.fn.systemlist("python3 -c \"import sys,json; print(json.dumps(json.load(sys.stdin), separators=(',',':')))\"", json_text)
+            if vim.v.shell_error ~= 0 then
+              print("Error compressing JSON. Please ensure it's valid JSON and that python3 is installed.")
+              return
+            end
+              local compressed_json = table.concat(compressed_output, "")
+            -- Replace the original text with the compressed JSON.
+            if start_row == end_row then
+              local line = vim.api.nvim_buf_get_lines(buf, start_row - 1, start_row, false)[1]
+              local new_line = string.sub(line, 1, start_pos[3] - 1) .. compressed_json .. string.sub(line, end_pos[3] + 1)
+              vim.api.nvim_buf_set_lines(buf, start_row - 1, start_row, false, { new_line })
+            else
+              vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, { compressed_json })
+            end
+          end,
+        },
+        {
           name = "Format text block with newlines",
           tags = {"format", "newlines"},
-          weight = -2,
+          weight = -3,
           execute = function()
             local buf = vim.api.nvim_get_current_buf()
             -- Extract the selected text.
@@ -1006,6 +1048,15 @@ table.insert(plugins, {
   "mrcjkb/rustaceanvim",
   version = "^4",
   lazy = false,
+})
+
+table.insert(plugins, {
+  "dwoznicki/bufhopper.nvim",
+  config = function()
+    local bufhopper = require("bufhopper")
+    bufhopper.setup()
+    vim.keymap.set("n", "<leader>u", bufhopper.open, {silent = true, desc = "Open bufhopper"})
+  end,
 })
 
 -- ------------------------------------------------------------------------------------------------
