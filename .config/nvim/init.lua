@@ -73,6 +73,7 @@ local Project = {
   OUTSET_BACKEND = 1,
   OUTSET_FRONTEND = 2,
   OUTSET_WEBRTC = 3,
+  OUTSET_TRANSCODER = 4,
 }
 local filepath = vim.fn.expand("%:p")
 if filepath == "" or filepath == nil then
@@ -85,6 +86,8 @@ elseif string.find(filepath, "outset%-ai/backend") then
   project = Project.OUTSET_BACKEND
 elseif string.find(filepath, "outset%-ai/frontend") then
   project = Project.OUTSET_FRONTEND
+elseif string.find(filepath, "outset%-ai/transcoder") then
+  project = Project.OUTSET_TRANSCODER
 end
 
 local plugins = {}
@@ -497,7 +500,9 @@ table.insert(plugins, {
     if project == Project.OUTSET_WEBRTC then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/webrtc_python311_packages")
     elseif project == Project.OUTSET_BACKEND then
-      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/backend_python_packages_312")
+      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/backend_python_packages_313")
+    elseif project == Project.OUTSET_TRANSCODER then
+      table.insert(python_extra_paths, "~/OrbStack/docker/volumes/transcoder_python_packages_313")
     end
     -- lspconfig.pyright.setup({
     --   capabilities = vim.deepcopy(capabilities),
@@ -599,13 +604,16 @@ table.insert(plugins, {
   end,
 })
 table.insert(plugins, {
-  "Chaitanyabsprip/fastaction.nvim",
+  "luckasRanarison/clear-action.nvim",
   config = function()
-    local fastaction = require("fastaction")
-    fastaction.setup({
-      dismiss_keys = {"q", "<Esc>"},
+    require("clear-action").setup({
+      signs = {
+        position = "right_align",
+      },
+      mappings = {
+        code_action = {"<leader>ca", "Code action"},
+      },
     })
-    vim.keymap.set({"n", "x"}, "<leader>ca", fastaction.code_action, {desc = "Code action"})
   end,
 })
 table.insert(plugins, {
@@ -653,14 +661,6 @@ table.insert(plugins, {
       layouts = {
         {
           elements = {
-            {id = "scopes", size = 0.5},
-            {id = "breakpoints", size = 0.5},
-          },
-          position = "left",
-          size = 40,
-        },
-        {
-          elements = {
             {id = "repl", size = 1.0},
           },
           position = "bottom",
@@ -674,11 +674,33 @@ table.insert(plugins, {
     dap.listeners.before.event_terminated.dapui_config = dap_ui.close
     dap.listeners.before.event_exited.dapui_config = dap_ui.close
 
+    vim.keymap.set(
+      "n",
+      "<M-c>",
+      function()
+        dap.continue()
+      end,
+      {desc = "Debugging continue"}
+    )
+    vim.keymap.set(
+      "n",
+      "<M-n>",
+      function()
+        dap.step_over()
+      end,
+      {desc = "Debugging step to next line"}
+    )
+    vim.keymap.set(
+      "n",
+      "<M-S-n>",
+      function()
+        dap.step_into()
+      end,
+      {desc = "Debugging step into function"}
+    )
+
     vim.keymap.set("n", "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", {desc = "Toggle breakpoint"})
     vim.keymap.set("n", "<leader>dl", "<cmd>lua require('dap').clear_breakpoints()<cr>", {desc = "Clear all breakpoints"})
-    vim.keymap.set("n", "<leader>dc", "<cmd>lua require('dap').continue()<cr>", {desc = "Continue debugging"})
-    vim.keymap.set("n", "<leader>dn", "<cmd>lua require('dap').step_over()<cr>", {desc = "Debugging step to next line"})
-    vim.keymap.set("n", "<leader>dN", "<cmd>lua require('dap').step_into()<cr>", {desc = "Debugging step into function"})
     vim.keymap.set("n", "<leader>de", "<cmd>lua require('dap').set_exception_breakpoints({'raised', 'uncaught'})<cr>", {desc = "Create debugging breakpoint on exception"})
     vim.keymap.set("n", "<leader>du", "<cmd>lua require('dapui').toggle()<cr>", {desc = "Toggle debugging UI"})
     vim.keymap.set("n", "<leader>dk", "<cmd>lua require('dapui').eval()<cr>", {desc = "Debugging hover"})
