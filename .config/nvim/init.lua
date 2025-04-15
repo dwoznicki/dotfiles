@@ -552,8 +552,8 @@ table.insert(plugins, {
     vim.keymap.set("n", "gt", function() snacks.picker.lsp_type_definitions() end, {desc = "Goto type definition"})
     vim.keymap.set("n", "gr", function() snacks.picker.lsp_references() end, {desc = "References"})
     vim.keymap.set("n", "K", vim.lsp.buf.hover, {desc = "Hover"})
-    vim.keymap.set("n", "gj", diagnostic_goto(true), {desc = "Next diagnostic"})
-    vim.keymap.set("n", "gk", diagnostic_goto(false), {desc = "Prev diagnostic"})
+    vim.keymap.set("n", "gn", diagnostic_goto(true), {desc = "Next diagnostic"})
+    vim.keymap.set("n", "gN", diagnostic_goto(false), {desc = "Prev diagnostic"})
     vim.keymap.set("n", "ge", diagnostic_goto(true, "ERROR"), {desc = "Next error"})
     vim.keymap.set("n", "gE", diagnostic_goto(false, "ERROR"), {desc = "Prev error"})
     vim.keymap.set("n", "gq", diagnostic_goto(true, "WARN"), {desc = "Next warning"})
@@ -612,6 +612,11 @@ table.insert(plugins, {
       },
       mappings = {
         code_action = {"<leader>ca", "Code action"},
+      },
+      action_labels = {
+        eslint = {
+          ["Fix all auto-fixable problems"] = "x",
+        },
       },
     })
   end,
@@ -676,7 +681,7 @@ table.insert(plugins, {
 
     vim.keymap.set(
       "n",
-      "<M-c>",
+      "<C-;>",
       function()
         dap.continue()
       end,
@@ -684,7 +689,7 @@ table.insert(plugins, {
     )
     vim.keymap.set(
       "n",
-      "<M-n>",
+      "<C-.>",
       function()
         dap.step_over()
       end,
@@ -692,7 +697,7 @@ table.insert(plugins, {
     )
     vim.keymap.set(
       "n",
-      "<M-S-n>",
+      "<C-S-.>",
       function()
         dap.step_into()
       end,
@@ -1058,6 +1063,7 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fK", function() snacks.picker.keymaps() end, {desc = "Keymaps"})
     vim.keymap.set("n", "<leader>fw", function() snacks.picker.lsp_symbols() end, {desc = "Workspace symbols"})
     vim.keymap.set("n", "<leader>gs", function() snacks.picker.git_status() end, {desc = "Git status"})
+    vim.keymap.set("n", "<leader>gf", function() snacks.picker.git_diff() end, {desc = "Git list diff hunks"})
     vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
     vim.keymap.set("n", "<leader>fj", function() snacks.picker.smart() end, {desc = "Smart files"})
     vim.keymap.set("n", "<leader>fe", function() snacks.picker.resume() end, {desc = "Resume last picker"})
