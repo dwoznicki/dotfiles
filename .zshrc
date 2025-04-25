@@ -49,3 +49,5 @@ which fzf > /dev/null
 if [ $? -eq 0 ]; then
     source <(fzf --zsh)
 fi
+
+. "$HOME/.local/bin/env"
