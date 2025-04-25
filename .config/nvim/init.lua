@@ -697,7 +697,7 @@ table.insert(plugins, {
     )
     vim.keymap.set(
       "n",
-      "<C-S-.>",
+      "<C-,>",
       function()
         dap.step_into()
       end,
@@ -1021,6 +1021,26 @@ table.insert(plugins, {
     vim.keymap.set({"n", "v"}, "<leader>t", require("toolbox").show_picker)
   end,
 })
+table.insert(plugins, {
+  "stevearc/quicker.nvim",
+  event = "FileType qf",
+  config = function()
+    require("quicker").setup({
+      follow = {
+        enabled = true,
+      },
+    })
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "qf",
+      callback = function(ctx)
+        vim.keymap.set("n", "j", ":cnext<cr><C-w>p", {buffer = ctx.buf, silent = true, noremap = true})
+        vim.keymap.set("n", "k", ":cprev<cr><C-w>p", {buffer = ctx.buf, silent = true, noremap = true})
+        vim.keymap.set("n", "gg", ":cfirst<cr><C-w>p", {buffer = ctx.buf, silent = true, noremap = true})
+        vim.keymap.set("n", "G", ":clast<cr><C-w>p", {buffer = ctx.buf, silent = true, noremap = true})
+      end,
+    })
+  end,
+})
 
 -- ----------------------------------------------------------------------------------------------
 -- #Snacks
@@ -1053,7 +1073,7 @@ table.insert(plugins, {
       input = {},
       lazygit = {},
     })
-    vim.keymap.set("n", "<leader>ff", function() snacks.picker.files({hidden = true}) end, {desc = "Find files"})
+    vim.keymap.set("n", "<leader>ff", function() snacks.picker.smart() end, {desc = "Smart files"})
     vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
     vim.keymap.set({"n", "x"}, "<leader>fG", function() snacks.picker.grep_word() end, {desc = "Search word"})
     vim.keymap.set("n", "<leader>fs", function() snacks.picker.buffers() end, {desc = "Buffers"})
@@ -1065,7 +1085,6 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>gs", function() snacks.picker.git_status() end, {desc = "Git status"})
     vim.keymap.set("n", "<leader>gf", function() snacks.picker.git_diff() end, {desc = "Git list diff hunks"})
     vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
-    vim.keymap.set("n", "<leader>fj", function() snacks.picker.smart() end, {desc = "Smart files"})
     vim.keymap.set("n", "<leader>fe", function() snacks.picker.resume() end, {desc = "Resume last picker"})
   end,
 })
