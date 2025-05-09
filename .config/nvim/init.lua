@@ -303,6 +303,13 @@ table.insert(plugins, {
   end,
 })
 table.insert(plugins, {
+  "windwp/nvim-ts-autotag",
+  event = "VeryLazy",
+  config = function()
+    require("nvim-ts-autotag").setup()
+  end,
+})
+table.insert(plugins, {
   "folke/which-key.nvim",
   event = "VeryLazy",
   config = function()
@@ -1025,11 +1032,7 @@ table.insert(plugins, {
   "stevearc/quicker.nvim",
   event = "FileType qf",
   config = function()
-    require("quicker").setup({
-      follow = {
-        enabled = true,
-      },
-    })
+    require("quicker").setup()
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "qf",
       callback = function(ctx)
@@ -1051,7 +1054,16 @@ table.insert(plugins, {
     local snacks = require("snacks")
     snacks.setup({
       bigfile = {},
-      picker = {},
+      picker = {
+        layout = {
+          fullscreen = true,
+        },
+        formatters = {
+          file = {
+            truncate = 80,
+          },
+        },
+      },
       dashboard = {
         preset = {
           keys = {
