@@ -469,6 +469,7 @@ table.insert(plugins, {
             library = {
               vim.env.VIMRUNTIME,
             },
+            useGitIgnore = false,
           },
         })
       end,
@@ -1109,14 +1110,16 @@ table.insert(plugins, {
   lazy = false,
 })
 
-table.insert(plugins, {
-  "dwoznicki/bufhopper.nvim",
-  config = function()
-    local bufhopper = require("bufhopper")
-    bufhopper.setup()
-    vim.keymap.set("n", "<leader>u", bufhopper.open, {silent = true, desc = "Open bufhopper"})
-  end,
-})
+-- table.insert(plugins, {
+--   "bufhopper.nvim",
+--   dev = true,
+--   config = function()
+--     local bufhopper = require("bufhopper")
+--     bufhopper.setup()
+--     vim.keymap.set("n", "<leader>u", bufhopper.open, {noremap = true, desc = "Open bufhopper"})
+--   end,
+-- })
+
 
 -- ------------------------------------------------------------------------------------------------
 -- #Setup lazy
