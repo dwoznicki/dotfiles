@@ -303,13 +303,6 @@ table.insert(plugins, {
   end,
 })
 table.insert(plugins, {
-  "windwp/nvim-ts-autotag",
-  event = "VeryLazy",
-  config = function()
-    require("nvim-ts-autotag").setup()
-  end,
-})
-table.insert(plugins, {
   "folke/which-key.nvim",
   event = "VeryLazy",
   config = function()
@@ -1024,6 +1017,55 @@ table.insert(plugins, {
             end
           end,
         },
+        {
+          name = "Format assertNumQueries trace",
+          tags = {"format"},
+          weight = -4,
+          execute = function()
+            local buf = vim.api.nvim_get_current_buf()
+            -- Extract the selected text.
+            local start_pos = vim.fn.getpos("'<")
+            local end_pos = vim.fn.getpos("'>")
+            local start_row, start_col = start_pos[2], start_pos[3]
+            local end_row, end_col = end_pos[2], end_pos[3]
+            local lines = vim.api.nvim_buf_get_lines(buf, start_row - 1, end_row, false)
+            if #lines < 1 then
+              return
+            end
+            -- core formatter: takes a list of lines, returns formatted lines
+            local formatted = {}
+            for _, line in ipairs(lines) do
+              -- match “E   1. <rest>”
+              local num, rest = line:match("^%s*E%s*(%d+)%.%s*(.+)$")
+              if num and rest then
+                local cmd = rest:match("^(%u+)")
+                if cmd == "SELECT" then
+                  -- grab main table after FROM
+                  local main_tbl = rest:match("FROM%s+\"([^\"]+)\"")
+                  -- collect any JOINs
+                  local joins = {}
+                  for jt, jt_tbl in rest:gmatch("([A-Z]+(?: [A-Z]+) JOIN)%s+\"([^\"]+)\"") do
+                    table.insert(joins, string.format('%s "%s"', jt, jt_tbl))
+                  end
+                  local join_str = #joins > 0 and (" (" .. table.concat(joins, ", ") .. ")") or ""
+                  table.insert(formatted, string.format("# %s. SELECT \"%s\"%s", num, main_tbl or "?", join_str))
+                elseif cmd == "BEGIN" or cmd == "COMMIT" then
+                  table.insert(formatted, string.format("# %s. %s", num, cmd))
+                elseif cmd == "UPDATE" then
+                  local upd_tbl = rest:match("^UPDATE%s+\"([^\"]+)\"")
+                  table.insert(formatted, string.format('# %s. UPDATE "%s"', num, upd_tbl or "?"))
+                else
+                  -- fallback for anything else
+                  table.insert(formatted, string.format("# %s. %s", num, rest))
+                end
+              else
+                -- leave non‑matching lines untouched
+                table.insert(formatted, line)
+              end
+            end
+            vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, formatted)
+          end,
+        },
       },
     })
     vim.keymap.set({"n", "v"}, "<leader>t", require("toolbox").show_picker)
@@ -1277,6 +1319,7 @@ vim.keymap.set(
 
 vim.keymap.set("v", "gw", "y/\\V<C-R>=escape(@\",'/\')<cr><cr>N", {desc = "Search for visual selection"})
 vim.keymap.set("v", "/", "o<esc>/\\%V", {desc = "Search within visual selection"})
+vim.keymap.set("n", "<leader>vp", "v`]o`[", {desc = "Visual select pasted text"})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Autocommands
