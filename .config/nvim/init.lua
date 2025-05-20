@@ -1101,6 +1101,9 @@ table.insert(plugins, {
         layout = {
           fullscreen = true,
         },
+        sources = {
+          select = {layout = {fullscreen = false}},
+        },
         formatters = {
           file = {
             truncate = 80,
@@ -1132,7 +1135,6 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
     vim.keymap.set({"n", "x"}, "<leader>fG", function() snacks.picker.grep_word() end, {desc = "Search word"})
     vim.keymap.set("n", "<leader>fs", function() snacks.picker.buffers() end, {desc = "Buffers"})
-    vim.keymap.set("n", "<leader>fa", function() snacks.picker.pickers() end, {desc = "Open pickers"})
     vim.keymap.set("n", "<leader>fr", function() snacks.picker.recent() end, {desc = "Recent files"})
     vim.keymap.set("n", "<leader>fC", function() snacks.picker.colorschemes() end, {desc = "Color schemes"})
     vim.keymap.set("n", "<leader>fK", function() snacks.picker.keymaps() end, {desc = "Keymaps"})
@@ -1141,6 +1143,7 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>gf", function() snacks.picker.git_diff() end, {desc = "Git list diff hunks"})
     vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
     vim.keymap.set("n", "<leader>fe", function() snacks.picker.resume() end, {desc = "Resume last picker"})
+    vim.keymap.set("n", "<leader>fl", function() snacks.picker.lines() end, {desc = "Search lines"})
   end,
 })
 
