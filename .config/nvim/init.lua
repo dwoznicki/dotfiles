@@ -247,27 +247,30 @@ table.insert(plugins, {
     end,
   },
   config = function()
-    require("luasnip").setup({
+    local luasnip = require("luasnip")
+    luasnip.setup({
       region_check_events = "CursorMoved",
       delete_check_events = "TextChanged",
     })
+    vim.keymap.set({"i", "s"}, "<C-n>", function() luasnip.jump(1) end, {desc = "Next snippet field"})
+    vim.keymap.set({"i", "s"}, "<C-p>", function() luasnip.jump(-1) end, {desc = "Next snippet field"})
   end,
 })
-table.insert(plugins, {
-  "zbirenbaum/copilot.lua",
-  cmd = "Copilot",
-  event = "InsertEnter",
-  config = function()
-    require("copilot").setup({
-      panel = {
-        enabled = false,
-      },
-      suggestion = {
-        enabled = true,
-      },
-    })
-  end,
-})
+-- table.insert(plugins, {
+--   "zbirenbaum/copilot.lua",
+--   cmd = "Copilot",
+--   event = "InsertEnter",
+--   config = function()
+--     require("copilot").setup({
+--       panel = {
+--         enabled = false,
+--       },
+--       suggestion = {
+--         enabled = true,
+--       },
+--     })
+--   end,
+-- })
 table.insert(plugins, {
   "folke/flash.nvim",
   event = "VeryLazy",
@@ -444,19 +447,46 @@ table.insert(plugins, {
     lspconfig.jsonls.setup({
       capabilities = vim.deepcopy(capabilities),
     })
-    lspconfig.lua_ls.setup({
-      capabilities = vim.deepcopy(capabilities),
-      on_init = function(client)
-        local path = vim.fn.getcwd()
-        if vim.loop.fs_stat(path .. "/.luarc.json") or vim.loop.fs_stat(path .. "/.luarc.jsonc") then
-          return
-        end
-
-        client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
-          runtime = {
-            version = "LuaJIT"
+    -- lspconfig.lua_ls.setup({
+    --   capabilities = vim.deepcopy(capabilities),
+    --   on_init = function(client)
+    --     local path = vim.fn.getcwd()
+    --     if vim.uv.fs_stat(path .. "/.luarc.json") or vim.uv.fs_stat(path .. "/.luarc.jsonc") then
+    --       return
+    --     end
+    --
+    --     client.config.settings.Lua = vim.tbl_deep_extend("force", client.config.settings.Lua, {
+    --       runtime = {
+    --         version = "LuaJIT"
+    --       },
+    --       -- Make the server aware of Neovim runtime files.
+    --       workspace = {
+    --         checkThirdParty = false,
+    --         library = {
+    --           vim.env.VIMRUNTIME,
+    --         },
+    --         useGitIgnore = false,
+    --       },
+    --     })
+    --   end,
+    --   settings = {
+    --     Lua = {
+    --       completion = {
+    --         callSnippet = "Replace",
+    --       },
+    --     },
+    --   },
+    -- })
+    vim.lsp.enable("lua_ls")
+    vim.lsp.config("lua_ls", {
+      settings = {
+        Lua = {
+          completion = {
+            callSnippet = "Replace",
           },
-          -- Make the server aware of Neovim runtime files.
+          runtime = {
+            version = "LuaJIT",
+          },
           workspace = {
             checkThirdParty = false,
             library = {
@@ -464,14 +494,13 @@ table.insert(plugins, {
             },
             useGitIgnore = false,
           },
-        })
-      end,
-      settings = {
-        Lua = {
-          completion = {
-            callSnippet = "Replace",
-          },
         },
+      },
+    })
+    require("lazydev").setup({
+      library = {
+        -- Load luvit types when the `vim.uv` word is found.
+        {path = "${3rd}/luv/library", words = {"vim%.uv"}},
       },
     })
     if next(vim.fs.find({"deno.json"}, {upward = true, limit = 1})) ~= nil then
@@ -479,7 +508,7 @@ table.insert(plugins, {
         capabilities = vim.deepcopy(capabilities),
       })
     else
-      lspconfig.tsserver.setup({
+      lspconfig.ts_ls.setup({
         capabilities = vim.deepcopy(capabilities),
         settings = {
           diagnostics = {
@@ -519,13 +548,14 @@ table.insert(plugins, {
     --     },
     --   },
     -- })
-    lspconfig.basedpyright.setup({
-      capabilities = vim.deepcopy(capabilities),
+    vim.lsp.enable("basedpyright")
+    vim.lsp.config("basedpyright", {
       settings = {
         basedpyright = {
           analysis = {
             typeCheckingMode = "basic",
             extraPaths = python_extra_paths,
+            -- stubPath = "~/.pyenv/versions/3.13.1/lib/python3.13/site-packages",
             stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
           },
         },
@@ -545,13 +575,14 @@ table.insert(plugins, {
         go({severity = severity})
       end
     end
+
     local snacks = require("snacks")
     vim.keymap.set("n", "<leader>cd", vim.diagnostic.open_float, {desc = "Line diagnostics"})
     vim.keymap.set("n", "<leader>cl", "<cmd>LspInfo<cr>", {desc = "Lsp info"})
     vim.keymap.set("n", "gd", function() snacks.picker.lsp_definitions() end, {desc = "Goto definition"})
     vim.keymap.set("n", "gD", vim.lsp.buf.declaration, {desc = "Goto declaration"})
     vim.keymap.set("n", "gt", function() snacks.picker.lsp_type_definitions() end, {desc = "Goto type definition"})
-    vim.keymap.set("n", "gr", function() snacks.picker.lsp_references() end, {desc = "References"})
+    vim.keymap.set("n", "gr", function() snacks.picker.lsp_references() end, {desc = "References", nowait = true})
     vim.keymap.set("n", "K", vim.lsp.buf.hover, {desc = "Hover"})
     vim.keymap.set("n", "gn", diagnostic_goto(true), {desc = "Next diagnostic"})
     vim.keymap.set("n", "gN", diagnostic_goto(false), {desc = "Prev diagnostic"})
@@ -632,16 +663,14 @@ table.insert(plugins, {
 -- ----------------------------------------------------------------------------------------------
 -- #Debugging plugins
 table.insert(plugins, {
-  "mfussenegger/nvim-dap-python",
+  "miroshQa/debugmaster.nvim",
   dependencies = {
     "mfussenegger/nvim-dap",
-    "rcarriga/nvim-dap-ui",
-    "nvim-neotest/nvim-nio",
+    "mfussenegger/nvim-dap-python",
   },
   config = function()
     local dap = require("dap")
     local dap_python = require("dap-python")
-    local dap_ui = require("dapui")
     dap_python.setup("/opt/homebrew/bin/python3")
     dap.configurations.python = {
       {
@@ -650,7 +679,7 @@ table.insert(plugins, {
         request = "attach",
         name = "Attach to Docker",
         host = "127.0.0.1",
-        port = 5678,
+        port = 6678,
         pythonPath = function()
           return "/opt/homebrew/bin/python3"
         end,
@@ -662,56 +691,92 @@ table.insert(plugins, {
         }
       },
     }
-
-    dap_ui.setup({
-      layouts = {
-        {
-          elements = {
-            {id = "repl", size = 1.0},
-          },
-          position = "bottom",
-          size = 20,
-        },
-      },
-    })
-    -- Open and close debugging UI when debugger is attached/unattached. 
-    dap.listeners.before.attach.dapui_config = dap_ui.open
-    dap.listeners.before.launch.dapui_config = dap_ui.open
-    dap.listeners.before.event_terminated.dapui_config = dap_ui.close
-    dap.listeners.before.event_exited.dapui_config = dap_ui.close
-
-    vim.keymap.set(
-      "n",
-      "<C-;>",
-      function()
-        dap.continue()
-      end,
-      {desc = "Debugging continue"}
-    )
-    vim.keymap.set(
-      "n",
-      "<C-.>",
-      function()
-        dap.step_over()
-      end,
-      {desc = "Debugging step to next line"}
-    )
-    vim.keymap.set(
-      "n",
-      "<C-,>",
-      function()
-        dap.step_into()
-      end,
-      {desc = "Debugging step into function"}
-    )
-
-    vim.keymap.set("n", "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", {desc = "Toggle breakpoint"})
-    vim.keymap.set("n", "<leader>dl", "<cmd>lua require('dap').clear_breakpoints()<cr>", {desc = "Clear all breakpoints"})
-    vim.keymap.set("n", "<leader>de", "<cmd>lua require('dap').set_exception_breakpoints({'raised', 'uncaught'})<cr>", {desc = "Create debugging breakpoint on exception"})
-    vim.keymap.set("n", "<leader>du", "<cmd>lua require('dapui').toggle()<cr>", {desc = "Toggle debugging UI"})
-    vim.keymap.set("n", "<leader>dk", "<cmd>lua require('dapui').eval()<cr>", {desc = "Debugging hover"})
+    local debugmaster = require("debugmaster")
+    vim.keymap.set({"n", "v"}, "<leader>d", debugmaster.mode.toggle, {nowait = true})
   end,
 })
+
+-- table.insert(plugins, {
+--   "mfussenegger/nvim-dap-python",
+--   dependencies = {
+--     "mfussenegger/nvim-dap",
+--     "rcarriga/nvim-dap-ui",
+--     "nvim-neotest/nvim-nio",
+--   },
+--   config = function()
+--     local dap = require("dap")
+--     local dap_python = require("dap-python")
+--     local dap_ui = require("dapui")
+--     dap_python.setup("/opt/homebrew/bin/python3")
+--     dap.configurations.python = {
+--       {
+--         justMyCode = false,
+--         type = "python",
+--         request = "attach",
+--         name = "Attach to Docker",
+--         host = "127.0.0.1",
+--         port = 5678,
+--         pythonPath = function()
+--           return "/opt/homebrew/bin/python3"
+--         end,
+--         pathMappings = {
+--           {
+--             localRoot = vim.fn.getcwd(),
+--             remoteRoot = "/code",
+--           },
+--         }
+--       },
+--     }
+--
+--     dap_ui.setup({
+--       layouts = {
+--         {
+--           elements = {
+--             {id = "repl", size = 1.0},
+--           },
+--           position = "bottom",
+--           size = 20,
+--         },
+--       },
+--     })
+--     -- Open and close debugging UI when debugger is attached/unattached. 
+--     dap.listeners.before.attach.dapui_config = dap_ui.open
+--     dap.listeners.before.launch.dapui_config = dap_ui.open
+--     dap.listeners.before.event_terminated.dapui_config = dap_ui.close
+--     dap.listeners.before.event_exited.dapui_config = dap_ui.close
+--
+--     vim.keymap.set(
+--       "n",
+--       "<C-;>",
+--       function()
+--         dap.continue()
+--       end,
+--       {desc = "Debugging continue"}
+--     )
+--     vim.keymap.set(
+--       "n",
+--       "<C-.>",
+--       function()
+--         dap.step_over()
+--       end,
+--       {desc = "Debugging step to next line"}
+--     )
+--     vim.keymap.set(
+--       "n",
+--       "<C-,>",
+--       function()
+--         dap.step_into()
+--       end,
+--       {desc = "Debugging step into function"}
+--     )
+--
+--     vim.keymap.set("n", "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", {desc = "Toggle breakpoint"})
+--     vim.keymap.set("n", "<leader>dl", "<cmd>lua require('dap').clear_breakpoints()<cr>", {desc = "Clear all breakpoints"})
+--     vim.keymap.set("n", "<leader>de", "<cmd>lua require('dap').set_exception_breakpoints({'raised', 'uncaught'})<cr>", {desc = "Create debugging breakpoint on exception"})
+--     vim.keymap.set("n", "<leader>du", "<cmd>lua require('dapui').toggle()<cr>", {desc = "Toggle debugging UI"})
+--     vim.keymap.set("n", "<leader>dk", "<cmd>lua require('dapui').eval()<cr>", {desc = "Debugging hover"})
+--   end,
+-- })
 
 -- ----------------------------------------------------------------------------------------------
 -- #Git plugins
@@ -776,7 +841,7 @@ table.insert(plugins, {
       return function()
         ---@type {foreground?:number}?
         local hl = vim.api.nvim_get_hl_by_name(name, true)
-        return hl and hl.foreground and { fg = string.format("#%06x", hl.foreground) }
+        return hl and hl.foreground and {fg = string.format("#%06x", hl.foreground)}
       end
     end
     local lualine = require("lualine")
@@ -894,6 +959,7 @@ table.insert(plugins, {
             vim.fn.setreg("+", pytest_path)
             print("Copied \"" .. pytest_path .. "\" to clipboard")
           end,
+          require_input = false,
         },
         {
           name = "Format JSON block",
@@ -916,6 +982,7 @@ table.insert(plugins, {
             end
             vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, formatted_lines)
           end,
+          require_input = false,
         },
         {
           name = "Compress JSON block",
@@ -956,6 +1023,7 @@ table.insert(plugins, {
               vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, { compressed_json })
             end
           end,
+          require_input = false,
         },
         {
           name = "Format text block with newlines",
@@ -1016,6 +1084,7 @@ table.insert(plugins, {
               vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, replaced)
             end
           end,
+          require_input = false,
         },
         {
           name = "Format assertNumQueries trace",
@@ -1036,7 +1105,7 @@ table.insert(plugins, {
             local formatted = {}
             for _, line in ipairs(lines) do
               -- match “E   1. <rest>”
-              local num, rest = line:match("^%s*E%s*(%d+)%.%s*(.+)$")
+              local num, rest = line:match("^%s*E?%s*(%d+)%.%s*(.+)$")
               if num and rest then
                 local cmd = rest:match("^(%u+)")
                 if cmd == "SELECT" then
@@ -1051,9 +1120,15 @@ table.insert(plugins, {
                   table.insert(formatted, string.format("# %s. SELECT \"%s\"%s", num, main_tbl or "?", join_str))
                 elseif cmd == "BEGIN" or cmd == "COMMIT" then
                   table.insert(formatted, string.format("# %s. %s", num, cmd))
+                elseif cmd == "INSERT" then
+                  local upd_tbl = rest:match("^INSERT INTO%s+\"([^\"]+)\"")
+                  table.insert(formatted, string.format('# %s. INSERT INTO "%s"', num, upd_tbl or "?"))
                 elseif cmd == "UPDATE" then
                   local upd_tbl = rest:match("^UPDATE%s+\"([^\"]+)\"")
                   table.insert(formatted, string.format('# %s. UPDATE "%s"', num, upd_tbl or "?"))
+                elseif cmd == "DELETE" then
+                  local upd_tbl = rest:match("^DELETE FROM%s+\"([^\"]+)\"")
+                  table.insert(formatted, string.format('# %s. DELETE FROM "%s"', num, upd_tbl or "?"))
                 else
                   -- fallback for anything else
                   table.insert(formatted, string.format("# %s. %s", num, rest))
@@ -1064,6 +1139,18 @@ table.insert(plugins, {
               end
             end
             vim.api.nvim_buf_set_lines(buf, start_row - 1, end_row, false, formatted)
+            vim.cmd(string.format("%d,%dnormal! ==", start_row - 1, end_row))
+          end,
+          require_input = false,
+        },
+        {
+          name = "Change git base branch",
+          tags = {"git"},
+          weight = -5,
+          require_input = true,
+          ---@param branch string
+          execute = function(branch)
+            vim.cmd(string.format("GitSigns change_base %s", branch))
           end,
         },
       },
@@ -1131,7 +1218,7 @@ table.insert(plugins, {
       input = {},
       lazygit = {},
     })
-    vim.keymap.set("n", "<leader>ff", function() snacks.picker.smart() end, {desc = "Smart files"})
+    -- vim.keymap.set("n", "<leader>ff", function() snacks.picker.smart() end, {desc = "Smart files"})
     vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
     vim.keymap.set({"n", "x"}, "<leader>fG", function() snacks.picker.grep_word() end, {desc = "Search word"})
     vim.keymap.set("n", "<leader>fs", function() snacks.picker.buffers() end, {desc = "Buffers"})
@@ -1141,9 +1228,22 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fw", function() snacks.picker.lsp_symbols() end, {desc = "Workspace symbols"})
     vim.keymap.set("n", "<leader>gs", function() snacks.picker.git_status() end, {desc = "Git status"})
     vim.keymap.set("n", "<leader>gf", function() snacks.picker.git_diff() end, {desc = "Git list diff hunks"})
+    vim.keymap.set("n", "<leader>gL", function() snacks.picker.git_log_line() end, {desc = "Git log line"})
     vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
     vim.keymap.set("n", "<leader>fe", function() snacks.picker.resume() end, {desc = "Resume last picker"})
     vim.keymap.set("n", "<leader>fl", function() snacks.picker.lines() end, {desc = "Search lines"})
+  end,
+})
+table.insert(plugins, {
+  "dmtrKovalenko/fff.nvim",
+  build = "cargo build --release",
+  config = function()
+    local fff = require("fff")
+    fff.setup({
+      width = 0.9,
+      height = 0.9,
+    })
+    vim.keymap.set("n", "<leader>ff", function() fff.find_in_git_root() end, {desc = "File finder"})
   end,
 })
 
@@ -1231,6 +1331,7 @@ vim.opt.pumblend = 10 -- Popup blend
 vim.opt.pumheight = 10 -- Maximum number of entries in a popup
 vim.opt.list = true
 vim.opt.listchars = {tab = "» ", trail = "·", nbsp = "␣"}
+vim.o.winborder = "rounded"
 
 -- ------------------------------------------------------------------------------------------------
 -- #Keymaps
