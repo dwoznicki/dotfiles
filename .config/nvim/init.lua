@@ -256,21 +256,6 @@ table.insert(plugins, {
     vim.keymap.set({"i", "s"}, "<C-p>", function() luasnip.jump(-1) end, {desc = "Next snippet field"})
   end,
 })
--- table.insert(plugins, {
---   "zbirenbaum/copilot.lua",
---   cmd = "Copilot",
---   event = "InsertEnter",
---   config = function()
---     require("copilot").setup({
---       panel = {
---         enabled = false,
---       },
---       suggestion = {
---         enabled = true,
---       },
---     })
---   end,
--- })
 table.insert(plugins, {
   "folke/flash.nvim",
   event = "VeryLazy",
@@ -288,21 +273,26 @@ table.insert(plugins, {
     vim.keymap.set("n", "ss", "<cmd>lua require('flash').jump()<cr>", {desc = "Flash"})
   end,
 })
--- table.insert(plugins, {
---   "gbprod/substitute.nvim",
---   config = function()
---     local substitute = require("substitute")
---     substitute.setup()
---     vim.keymap.set("n", "s", substitute.operator, {noremap = true})
---     vim.keymap.set("n", "S", substitute.line, {noremap = true})
---     vim.keymap.set({"v", "x"}, "s", substitute.visual, {noremap = true})
---   end,
--- })
 table.insert(plugins, {
   "echasnovski/mini.surround",
   config = function()
     local surround = require("mini.surround")
     surround.setup()
+  end,
+})
+table.insert(plugins, {
+  "danymat/neogen",
+  config = function()
+    local neogen = require("neogen")
+    neogen.setup({
+      languages = {
+        python = {
+          template = {
+            annotation_convention = "google_docstrings",
+          },
+        },
+      },
+    })
   end,
 })
 table.insert(plugins, {
@@ -580,16 +570,16 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>cd", vim.diagnostic.open_float, {desc = "Line diagnostics"})
     vim.keymap.set("n", "<leader>cl", "<cmd>LspInfo<cr>", {desc = "Lsp info"})
     vim.keymap.set("n", "gd", function() snacks.picker.lsp_definitions() end, {desc = "Goto definition"})
-    vim.keymap.set("n", "gD", vim.lsp.buf.declaration, {desc = "Goto declaration"})
+    -- vim.keymap.set("n", "gD", vim.lsp.buf.declaration, {desc = "Goto declaration"})
     vim.keymap.set("n", "gt", function() snacks.picker.lsp_type_definitions() end, {desc = "Goto type definition"})
     vim.keymap.set("n", "gr", function() snacks.picker.lsp_references() end, {desc = "References", nowait = true})
     vim.keymap.set("n", "K", vim.lsp.buf.hover, {desc = "Hover"})
-    vim.keymap.set("n", "gn", diagnostic_goto(true), {desc = "Next diagnostic"})
-    vim.keymap.set("n", "gN", diagnostic_goto(false), {desc = "Prev diagnostic"})
-    vim.keymap.set("n", "ge", diagnostic_goto(true, "ERROR"), {desc = "Next error"})
-    vim.keymap.set("n", "gE", diagnostic_goto(false, "ERROR"), {desc = "Prev error"})
-    vim.keymap.set("n", "gq", diagnostic_goto(true, "WARN"), {desc = "Next warning"})
-    vim.keymap.set("n", "gQ", diagnostic_goto(false, "WARN"), {desc = "Prev warning"})
+    vim.keymap.set("n", "]d", diagnostic_goto(true), {desc = "Next diagnostic"})
+    vim.keymap.set("n", "[d", diagnostic_goto(false), {desc = "Prev diagnostic"})
+    vim.keymap.set("n", "]e", diagnostic_goto(true, "ERROR"), {desc = "Next error"})
+    vim.keymap.set("n", "[e", diagnostic_goto(false, "ERROR"), {desc = "Prev error"})
+    vim.keymap.set("n", "]w", diagnostic_goto(true, "WARN"), {desc = "Next warning"})
+    vim.keymap.set("n", "[w", diagnostic_goto(false, "WARN"), {desc = "Prev warning"})
     vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, {desc = "Rename token"})
     vim.keymap.set(
       "n",
@@ -780,19 +770,31 @@ table.insert(plugins, {
 
 -- ----------------------------------------------------------------------------------------------
 -- #Git plugins
+-- table.insert(plugins, {
+--   "akinsho/git-conflict.nvim",
+--   version = "1.1.1",
+--   config = function()
+--     require("git-conflict").setup({
+--       default_mappings = false,
+--     })
+--     vim.keymap.set("n", "<leader>gco", "<cmd>GitConflictChooseOurs<cr>", {desc = "Git conflict choose ours"})
+--     vim.keymap.set("n", "<leader>gct", "<cmd>GitConflictChooseTheirs<cr>", {desc = "Git conflict choose theirs"})
+--     vim.keymap.set("n", "<leader>gcb", "<cmd>GitConflictChooseBoth<cr>", {desc = "Git conflict choose both"})
+--     vim.keymap.set("n", "<leader>gc0", "<cmd>GitConflictChooseNone<cr>", {desc = "Git conflict choose none"})
+--     vim.keymap.set("n", "go", "<cmd>GitConflictNextConflict<cr>", {desc = "Git conflict jump next"})
+--     vim.keymap.set("n", "gp", "<cmd>GitConflictPrevConflict<cr>", {desc = "Git conflict jump prev"})
+--   end,
+-- })
 table.insert(plugins, {
-  "akinsho/git-conflict.nvim",
-  version = "1.1.1",
+  "StackInTheWild/headhunter.nvim",
   config = function()
-    require("git-conflict").setup({
-      default_mappings = false,
+    require("headhunter").setup({
+      keymaps = {
+        take_head = "<leader>gco",
+        take_origin = "<leader>gct",
+        take_both = "<leader>gcb",
+      }
     })
-    vim.keymap.set("n", "<leader>gco", "<cmd>GitConflictChooseOurs<cr>", {desc = "Git conflict choose ours"})
-    vim.keymap.set("n", "<leader>gct", "<cmd>GitConflictChooseTheirs<cr>", {desc = "Git conflict choose theirs"})
-    vim.keymap.set("n", "<leader>gcb", "<cmd>GitConflictChooseBoth<cr>", {desc = "Git conflict choose both"})
-    vim.keymap.set("n", "<leader>gc0", "<cmd>GitConflictChooseNone<cr>", {desc = "Git conflict choose none"})
-    vim.keymap.set("n", "go", "<cmd>GitConflictNextConflict<cr>", {desc = "Git conflict jump next"})
-    vim.keymap.set("n", "gp", "<cmd>GitConflictPrevConflict<cr>", {desc = "Git conflict jump prev"})
   end,
 })
 table.insert(plugins, {
@@ -1153,6 +1155,15 @@ table.insert(plugins, {
             vim.cmd(string.format("GitSigns change_base %s", branch))
           end,
         },
+        {
+          name = "Generate docstring",
+          tags = {"docs"},
+          weight = -6,
+          require_input = false,
+          execute = function()
+            require("neogen").generate()
+          end,
+        },
       },
     })
     vim.keymap.set({"n", "v"}, "<leader>t", require("toolbox").show_picker)
@@ -1218,7 +1229,7 @@ table.insert(plugins, {
       input = {},
       lazygit = {},
     })
-    -- vim.keymap.set("n", "<leader>ff", function() snacks.picker.smart() end, {desc = "Smart files"})
+    vim.keymap.set("n", "<leader>ff", function() snacks.picker.smart() end, {desc = "Smart files"})
     vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
     vim.keymap.set({"n", "x"}, "<leader>fG", function() snacks.picker.grep_word() end, {desc = "Search word"})
     vim.keymap.set("n", "<leader>fs", function() snacks.picker.buffers() end, {desc = "Buffers"})
@@ -1234,18 +1245,6 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fl", function() snacks.picker.lines() end, {desc = "Search lines"})
   end,
 })
-table.insert(plugins, {
-  "dmtrKovalenko/fff.nvim",
-  build = "cargo build --release",
-  config = function()
-    local fff = require("fff")
-    fff.setup({
-      width = 0.9,
-      height = 0.9,
-    })
-    vim.keymap.set("n", "<leader>ff", function() fff.find_in_git_root() end, {desc = "File finder"})
-  end,
-})
 
 -- ------------------------------------------------------------------------------------------------
 -- #Language specific
@@ -1255,15 +1254,14 @@ table.insert(plugins, {
   lazy = false,
 })
 
--- table.insert(plugins, {
---   "bufhopper.nvim",
---   dev = true,
---   config = function()
---     local bufhopper = require("bufhopper")
---     bufhopper.setup()
---     vim.keymap.set("n", "<leader>u", bufhopper.open, {noremap = true, desc = "Open bufhopper"})
---   end,
--- })
+table.insert(plugins, {
+  "dwoznicki/hopper.nvim",
+  config = function()
+    local hopper = require("hopper")
+    hopper.setup()
+    vim.keymap.set("n", "<leader>u", hopper.toggle_hopper, {noremap = true, desc = "Toggle jumper"})
+  end,
+})
 
 
 -- ------------------------------------------------------------------------------------------------
