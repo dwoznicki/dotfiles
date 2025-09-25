@@ -51,3 +51,6 @@ if [ $? -eq 0 ]; then
 fi
 
 . "$HOME/.local/bin/env"
+
+setopt share_history
+HISTSIZE=10000
