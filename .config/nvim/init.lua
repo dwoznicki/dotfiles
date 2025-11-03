@@ -686,105 +686,8 @@ table.insert(plugins, {
   end,
 })
 
--- table.insert(plugins, {
---   "mfussenegger/nvim-dap-python",
---   dependencies = {
---     "mfussenegger/nvim-dap",
---     "rcarriga/nvim-dap-ui",
---     "nvim-neotest/nvim-nio",
---   },
---   config = function()
---     local dap = require("dap")
---     local dap_python = require("dap-python")
---     local dap_ui = require("dapui")
---     dap_python.setup("/opt/homebrew/bin/python3")
---     dap.configurations.python = {
---       {
---         justMyCode = false,
---         type = "python",
---         request = "attach",
---         name = "Attach to Docker",
---         host = "127.0.0.1",
---         port = 5678,
---         pythonPath = function()
---           return "/opt/homebrew/bin/python3"
---         end,
---         pathMappings = {
---           {
---             localRoot = vim.fn.getcwd(),
---             remoteRoot = "/code",
---           },
---         }
---       },
---     }
---
---     dap_ui.setup({
---       layouts = {
---         {
---           elements = {
---             {id = "repl", size = 1.0},
---           },
---           position = "bottom",
---           size = 20,
---         },
---       },
---     })
---     -- Open and close debugging UI when debugger is attached/unattached. 
---     dap.listeners.before.attach.dapui_config = dap_ui.open
---     dap.listeners.before.launch.dapui_config = dap_ui.open
---     dap.listeners.before.event_terminated.dapui_config = dap_ui.close
---     dap.listeners.before.event_exited.dapui_config = dap_ui.close
---
---     vim.keymap.set(
---       "n",
---       "<C-;>",
---       function()
---         dap.continue()
---       end,
---       {desc = "Debugging continue"}
---     )
---     vim.keymap.set(
---       "n",
---       "<C-.>",
---       function()
---         dap.step_over()
---       end,
---       {desc = "Debugging step to next line"}
---     )
---     vim.keymap.set(
---       "n",
---       "<C-,>",
---       function()
---         dap.step_into()
---       end,
---       {desc = "Debugging step into function"}
---     )
---
---     vim.keymap.set("n", "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", {desc = "Toggle breakpoint"})
---     vim.keymap.set("n", "<leader>dl", "<cmd>lua require('dap').clear_breakpoints()<cr>", {desc = "Clear all breakpoints"})
---     vim.keymap.set("n", "<leader>de", "<cmd>lua require('dap').set_exception_breakpoints({'raised', 'uncaught'})<cr>", {desc = "Create debugging breakpoint on exception"})
---     vim.keymap.set("n", "<leader>du", "<cmd>lua require('dapui').toggle()<cr>", {desc = "Toggle debugging UI"})
---     vim.keymap.set("n", "<leader>dk", "<cmd>lua require('dapui').eval()<cr>", {desc = "Debugging hover"})
---   end,
--- })
-
 -- ----------------------------------------------------------------------------------------------
 -- #Git plugins
--- table.insert(plugins, {
---   "akinsho/git-conflict.nvim",
---   version = "1.1.1",
---   config = function()
---     require("git-conflict").setup({
---       default_mappings = false,
---     })
---     vim.keymap.set("n", "<leader>gco", "<cmd>GitConflictChooseOurs<cr>", {desc = "Git conflict choose ours"})
---     vim.keymap.set("n", "<leader>gct", "<cmd>GitConflictChooseTheirs<cr>", {desc = "Git conflict choose theirs"})
---     vim.keymap.set("n", "<leader>gcb", "<cmd>GitConflictChooseBoth<cr>", {desc = "Git conflict choose both"})
---     vim.keymap.set("n", "<leader>gc0", "<cmd>GitConflictChooseNone<cr>", {desc = "Git conflict choose none"})
---     vim.keymap.set("n", "go", "<cmd>GitConflictNextConflict<cr>", {desc = "Git conflict jump next"})
---     vim.keymap.set("n", "gp", "<cmd>GitConflictPrevConflict<cr>", {desc = "Git conflict jump prev"})
---   end,
--- })
 table.insert(plugins, {
   "StackInTheWild/headhunter.nvim",
   config = function()
@@ -807,6 +710,12 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>gd", gitsigns.diffthis, {desc = "Git diff line"})
     vim.keymap.set("n", "gh", function() gitsigns.nav_hunk("next") end, {desc = "Goto next git hunk"})
     vim.keymap.set("n", "gH", function() gitsigns.nav_hunk("prev") end, {desc = "Goto prev git hunk"})
+  end,
+})
+table.insert(plugins, {
+  "sindrets/diffview.nvim",
+  config = function()
+    require("diffview").setup()
   end,
 })
 
