@@ -323,6 +323,13 @@ table.insert(plugins, {
     })
   end,
 })
+table.insert(plugins, {
+  "nemanjamalesija/smart-paste.nvim",
+  event = "VeryLazy",
+  config = function()
+    require("smart-paste").setup()
+  end,
+})
 
 -- ----------------------------------------------------------------------------------------------
 -- #Treesitter plugins
@@ -524,33 +531,31 @@ table.insert(plugins, {
     elseif project == Project.OUTSET_TRANSCODER then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/transcoder_python_packages_313")
     end
-    -- lspconfig.pyright.setup({
-    --   capabilities = vim.deepcopy(capabilities),
+    -- vim.lsp.enable("basedpyright")
+    -- vim.lsp.config("basedpyright", {
     --   settings = {
-    --     python = {
+    --     basedpyright = {
     --       analysis = {
     --         typeCheckingMode = "basic",
-    --         -- pythonPath = "/opt/homebrew/bin/python3",
     --         extraPaths = python_extra_paths,
-    --         -- stubPath = "/opt/homebrew/lib/python3.13/site-packages",
+    --         -- stubPath = "~/.pyenv/versions/3.13.1/lib/python3.13/site-packages",
     --         stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
     --       },
     --     },
     --   },
     -- })
-    vim.lsp.enable("basedpyright")
-    vim.lsp.config("basedpyright", {
+    vim.lsp.config("ty", {
       settings = {
-        basedpyright = {
-          analysis = {
-            typeCheckingMode = "basic",
-            extraPaths = python_extra_paths,
-            -- stubPath = "~/.pyenv/versions/3.13.1/lib/python3.13/site-packages",
-            stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
+        ty = {
+          configuration = {
+            environment = {
+              ["extra-paths"] = python_extra_paths,
+            },
           },
         },
       },
     })
+    vim.lsp.enable("ty")
     lspconfig.tailwindcss.setup({
       capabilities = vim.deepcopy(capabilities),
     })
@@ -717,6 +722,15 @@ table.insert(plugins, {
   config = function()
     require("diffview").setup()
   end,
+})
+table.insert(plugins, {
+  "linrongbin16/gitlinker.nvim",
+  cmd = "GitLink",
+  opts = {},
+  keys = {
+    { "<leader>gy", "<cmd>GitLink<cr>", mode = { "n", "v" }, desc = "Yank git link" },
+    { "<leader>gY", "<cmd>GitLink!<cr>", mode = { "n", "v" }, desc = "Open git link" },
+  },
 })
 
 -- ----------------------------------------------------------------------------------------------
@@ -1137,6 +1151,7 @@ table.insert(plugins, {
       },
       input = {},
       lazygit = {},
+      gh = {},
     })
     vim.keymap.set("n", "<leader>ff", function() snacks.picker.smart() end, {desc = "Smart files"})
     vim.keymap.set("n", "<leader>fg", function() snacks.picker.grep() end, {desc = "Search text live"})
@@ -1147,11 +1162,14 @@ table.insert(plugins, {
     vim.keymap.set("n", "<leader>fK", function() snacks.picker.keymaps() end, {desc = "Keymaps"})
     vim.keymap.set("n", "<leader>fw", function() snacks.picker.lsp_symbols() end, {desc = "Workspace symbols"})
     vim.keymap.set("n", "<leader>gs", function() snacks.picker.git_status() end, {desc = "Git status"})
-    vim.keymap.set("n", "<leader>gf", function() snacks.picker.git_diff() end, {desc = "Git list diff hunks"})
+    vim.keymap.set("n", "<leader>gff", function() snacks.picker.git_diff() end, {desc = "Git diff unstaged"})
+    vim.keymap.set("n", "<leader>gfd", function() snacks.picker.git_diff({base = "origin/dev"}) end, {desc = "Git diff origin/dev"})
+    vim.keymap.set("n", "<leader>gfm", function() snacks.picker.git_diff({base = "origin/main"}) end, {desc = "Git diff origin/main"})
     vim.keymap.set("n", "<leader>gL", function() snacks.picker.git_log_line() end, {desc = "Git log line"})
     vim.keymap.set("n", "<leader>fp", function() snacks.picker.projects() end, {desc = "Projects"})
     vim.keymap.set("n", "<leader>fe", function() snacks.picker.resume() end, {desc = "Resume last picker"})
     vim.keymap.set("n", "<leader>fl", function() snacks.picker.lines() end, {desc = "Search lines"})
+    vim.keymap.set("n", "<leader>ghp", function() snacks.picker.gh_pr() end, {desc = "GitHub PRs"})
   end,
 })
 
@@ -1168,7 +1186,7 @@ table.insert(plugins, {
   config = function()
     local hopper = require("hopper")
     hopper.setup()
-    vim.keymap.set("n", "<leader>u", hopper.toggle_hopper, {noremap = true, desc = "Toggle jumper"})
+    vim.keymap.set("n", "<leader>u", hopper.toggle_hopper, {noremap = true, desc = "Toggle hopper"})
   end,
 })
 
