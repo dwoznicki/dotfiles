@@ -693,18 +693,18 @@ table.insert(plugins, {
 
 -- ----------------------------------------------------------------------------------------------
 -- #Git plugins
-table.insert(plugins, {
-  "StackInTheWild/headhunter.nvim",
-  config = function()
-    require("headhunter").setup({
-      keymaps = {
-        take_head = "<leader>gco",
-        take_origin = "<leader>gct",
-        take_both = "<leader>gcb",
-      }
-    })
-  end,
-})
+-- table.insert(plugins, {
+--   "StackInTheWild/headhunter.nvim",
+--   config = function()
+--     require("headhunter").setup({
+--       keymaps = {
+--         take_head = "<leader>gco",
+--         take_origin = "<leader>gct",
+--         take_both = "<leader>gcb",
+--       }
+--     })
+--   end,
+-- })
 table.insert(plugins, {
   "lewis6991/gitsigns.nvim",
   config = function()
@@ -717,12 +717,12 @@ table.insert(plugins, {
     vim.keymap.set("n", "gH", function() gitsigns.nav_hunk("prev") end, {desc = "Goto prev git hunk"})
   end,
 })
-table.insert(plugins, {
-  "sindrets/diffview.nvim",
-  config = function()
-    require("diffview").setup()
-  end,
-})
+-- table.insert(plugins, {
+--   "sindrets/diffview.nvim",
+--   config = function()
+--     require("diffview").setup()
+--   end,
+-- })
 table.insert(plugins, {
   "linrongbin16/gitlinker.nvim",
   cmd = "GitLink",
@@ -731,6 +731,10 @@ table.insert(plugins, {
     { "<leader>gy", "<cmd>GitLink<cr>", mode = { "n", "v" }, desc = "Yank git link" },
     { "<leader>gY", "<cmd>GitLink!<cr>", mode = { "n", "v" }, desc = "Open git link" },
   },
+})
+table.insert(plugins, {
+  "esmuellert/codediff.nvim",
+  cmd = "CodeDiff",
 })
 
 -- ----------------------------------------------------------------------------------------------
