@@ -82,7 +82,7 @@ end
 local project = Project.UNSET
 if string.find(filepath, "outset%-ai/webrtc") then
   project = Project.OUTSET_WEBRTC
-elseif string.find(filepath, "outset%-ai/backend") then
+elseif string.find(filepath, "outset%/backend") then
   project = Project.OUTSET_BACKEND
 elseif string.find(filepath, "outset%-ai/frontend") then
   project = Project.OUTSET_FRONTEND
@@ -531,31 +531,31 @@ table.insert(plugins, {
     elseif project == Project.OUTSET_TRANSCODER then
       table.insert(python_extra_paths, "~/OrbStack/docker/volumes/transcoder_python_packages_313")
     end
-    -- vim.lsp.enable("basedpyright")
-    -- vim.lsp.config("basedpyright", {
-    --   settings = {
-    --     basedpyright = {
-    --       analysis = {
-    --         typeCheckingMode = "basic",
-    --         extraPaths = python_extra_paths,
-    --         -- stubPath = "~/.pyenv/versions/3.13.1/lib/python3.13/site-packages",
-    --         stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
-    --       },
-    --     },
-    --   },
-    -- })
-    vim.lsp.config("ty", {
+    vim.lsp.enable("basedpyright")
+    vim.lsp.config("basedpyright", {
       settings = {
-        ty = {
-          configuration = {
-            environment = {
-              ["extra-paths"] = python_extra_paths,
-            },
+        basedpyright = {
+          analysis = {
+            typeCheckingMode = "basic",
+            extraPaths = python_extra_paths,
+            -- stubPath = "~/.pyenv/versions/3.13.1/lib/python3.13/site-packages",
+            stubPath = "~/.pyenv/versions/3.12.8/lib/python3.12/site-packages",
           },
         },
       },
     })
-    vim.lsp.enable("ty")
+    -- vim.lsp.config("ty", {
+    --   settings = {
+    --     ty = {
+    --       configuration = {
+    --         environment = {
+    --           ["extra-paths"] = python_extra_paths,
+    --         },
+    --       },
+    --     },
+    --   },
+    -- })
+    -- vim.lsp.enable("ty")
     lspconfig.tailwindcss.setup({
       capabilities = vim.deepcopy(capabilities),
     })

@@ -54,3 +54,8 @@ fi
 
 setopt share_history
 HISTSIZE=10000
+# Make the up arrow key use local history instead of shared.
+zle-line-init() {
+  zle set-local-history 1
+}
+zle -N zle-line-init
