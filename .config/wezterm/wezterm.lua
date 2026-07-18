@@ -1,4 +1,5 @@
 local wezterm = require("wezterm")
+local tab_title = require("tab-title")
 local config = {}
 config.font = wezterm.font("JetBrains Mono")
 config.harfbuzz_features = {"calt=0", "clig=0", "liga=0"}
@@ -20,5 +21,7 @@ config.keys = {
 }
 config.audible_bell = "Disabled"
 config.scrollback_lines = 100000
+
+tab_title.apply_to_config(config)
 
 return config

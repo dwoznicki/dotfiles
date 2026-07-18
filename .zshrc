@@ -59,3 +59,8 @@ zle-line-init() {
   zle set-local-history 1
 }
 zle -N zle-line-init
+
+# Edit CLI commands with CTRL + g.
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^g' edit-command-line
