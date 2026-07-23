@@ -24,15 +24,18 @@ wezterm.on("format-tab-title", function(tab)
     local pane = tab.active_pane
     local proc = basename(pane.foreground_process_name)
     local title = pane.title or ""
+    local icon = icons[proc] or wezterm.nerdfonts.cod_terminal
+    -- 1-based tab number so it matches the jump shortcut.
+    local num = tab.tab_index + 1
 
     -- A program set a custom OSC title (Claude Code, or a remote shell over
-    -- ssh) iff the title isn't just echoing the process name. Leave verbatim.
+    -- ssh) iff the title isn't just echoing the process name. Show it verbatim
+    -- but keep the icon + number prefix.
     if title ~= "" and title ~= proc then
-        return " " .. title .. " "
+        return " " .. icon .. " " .. num .. ": " .. title .. " "
     end
 
-    local icon = icons[proc] or wezterm.nerdfonts.cod_terminal
-    return " " .. icon .. "  " .. (proc ~= "" and proc or "shell") .. " "
+    return " " .. icon .. " " .. num .. ": " .. (proc ~= "" and proc or "shell") .. " "
 end)
 
 function M.apply_to_config(config)
