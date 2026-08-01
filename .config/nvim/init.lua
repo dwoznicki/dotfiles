@@ -335,11 +335,14 @@ table.insert(plugins, {
 -- #Treesitter plugins
 table.insert(plugins, {
   "nvim-treesitter/nvim-treesitter",
+  branch = "master",
   build = ":TSUpdate",
   event = {"BufReadPost", "BufNewFile"},
   config = function()
     require("nvim-treesitter.configs").setup({
-      ignore_install = {"help"},
+      -- ipkg's upstream repo (srghma/tree-sitter-ipkg) is gone (404), so its
+      -- "download" writes a "Not Found" page that tar chokes on. Skip it.
+      ignore_install = {"help", "ipkg"},
       ensure_installed = "all",
       highlight = {
         enable = true,
@@ -381,6 +384,7 @@ table.insert(plugins, {
 })
 table.insert(plugins, {
   "nvim-treesitter/nvim-treesitter-textobjects",
+  branch = "master",
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
   },
@@ -432,18 +436,17 @@ table.insert(plugins, {
     "hrsh7th/cmp-nvim-lsp",
   },
   config = function()
-    local lspconfig = require("lspconfig")
-    -- local capabilities = require("cmp_nvim_lsp").default_capabilities(vim.lsp.protocol.make_client_capabilities())
     local capabilities = vim.tbl_deep_extend(
       "force",
       {},
       vim.lsp.protocol.make_client_capabilities(),
       require("cmp_nvim_lsp").default_capabilities()
     )
-    -- local capabilities = vim.lsp.protocol.make_client_capabilities()
-    lspconfig.jsonls.setup({
-      capabilities = vim.deepcopy(capabilities),
+    -- Apply capabilities to every server via the wildcard config.
+    vim.lsp.config("*", {
+      capabilities = capabilities,
     })
+    vim.lsp.enable("jsonls")
     -- lspconfig.lua_ls.setup({
     --   capabilities = vim.deepcopy(capabilities),
     --   on_init = function(client)
@@ -501,12 +504,9 @@ table.insert(plugins, {
       },
     })
     if next(vim.fs.find({"deno.json"}, {upward = true, limit = 1})) ~= nil then
-      lspconfig.denols.setup({
-        capabilities = vim.deepcopy(capabilities),
-      })
+      vim.lsp.enable("denols")
     else
-      lspconfig.ts_ls.setup({
-        capabilities = vim.deepcopy(capabilities),
+      vim.lsp.config("ts_ls", {
         settings = {
           diagnostics = {
             -- https://github.com/microsoft/TypeScript/blob/main/src/compiler/diagnosticMessages.json
@@ -516,12 +516,13 @@ table.insert(plugins, {
           },
         },
       })
+      vim.lsp.enable("ts_ls")
     end
     if next(vim.fs.find({".eslintrc", ".eslintrc.json", ".eslintrc.js", ".eslintrc.cjs"}, {upward = true, limit = 1})) ~= nil then
-      lspconfig.eslint.setup({
-        capabilities = vim.deepcopy(capabilities),
+      vim.lsp.config("eslint", {
         filetypes = {"javascript", "javascriptreact", "typescript", "typescriptreact"},
       })
+      vim.lsp.enable("eslint")
     end
     local python_extra_paths = {}
     if project == Project.OUTSET_WEBRTC then
@@ -556,12 +557,8 @@ table.insert(plugins, {
     --   },
     -- })
     -- vim.lsp.enable("ty")
-    lspconfig.tailwindcss.setup({
-      capabilities = vim.deepcopy(capabilities),
-    })
-    lspconfig.clangd.setup({
-      capabilities = vim.deepcopy(capabilities),
-    })
+    vim.lsp.enable("tailwindcss")
+    vim.lsp.enable("clangd")
 
     local function diagnostic_goto(next, severity)
       local go = next and vim.diagnostic.goto_next or vim.diagnostic.goto_prev
@@ -1185,14 +1182,14 @@ table.insert(plugins, {
   lazy = false,
 })
 
-table.insert(plugins, {
-  "dwoznicki/hopper.nvim",
-  config = function()
-    local hopper = require("hopper")
-    hopper.setup()
-    vim.keymap.set("n", "<leader>u", hopper.toggle_hopper, {noremap = true, desc = "Toggle hopper"})
-  end,
-})
+-- table.insert(plugins, {
+--   "dwoznicki/hopper.nvim",
+--   config = function()
+--     local hopper = require("hopper")
+--     hopper.setup()
+--     vim.keymap.set("n", "<leader>u", hopper.toggle_hopper, {noremap = true, desc = "Toggle hopper"})
+--   end,
+-- })
 
 
 -- ------------------------------------------------------------------------------------------------
