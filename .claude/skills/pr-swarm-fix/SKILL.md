@@ -1,5 +1,5 @@
 ---
-name: swarm-fix
+name: pr-swarm-fix
 description: Run review-swarm on a PR, let it post its findings to GitHub, then fix the Critical/High/Medium findings and push — as follow-up commits, respecting Daniel's PR conventions (keep status, no force-push, no summary comment, pre-commit before push). Low findings are skipped. Use when asked to "run review-swarm, post findings, then fix high/medium", "run the swarm and fix the findings", or similar.
 user_invocable: true
 argument-hint: "<pr-url|number> [--sev=critical,high,medium] [--update-desc]"
@@ -14,7 +14,7 @@ not re-implement either:
 
 1. **`review-swarm`** (the repo skill) does the reviewing, consolidation, and
    posting. Don't duplicate its lanes or its GitHub-posting logic — invoke it.
-2. **`resolve-pr`** (personal) owns the fix-and-push conventions. This skill
+2. **`pr-resolve`** (personal) owns the fix-and-push conventions. This skill
    reuses the same house rules for the fix phase.
 
 This is for the Outset monorepo (`Outset-AI/outset`).
@@ -30,7 +30,7 @@ This is for the Outset monorepo (`Outset-AI/outset`).
 
 ## House rules (inherited — do not violate)
 
-Same standing preferences `resolve-pr` enforces:
+Same standing preferences `pr-resolve` enforces:
 
 - **Never re-draft an open PR** — no `gh pr ready --undo`.
 - **Never force-push** — every fix is a new follow-up commit + plain `git push`.
@@ -96,7 +96,7 @@ expanding the diff.
 
 ### 4. Pre-push checks
 
-Same as `resolve-pr` step 7:
+Same as `pr-resolve` step 7:
 
 ```bash
 git diff origin/<base>...HEAD --stat        # THREE dots — confirm only intended files

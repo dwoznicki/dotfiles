@@ -1,5 +1,5 @@
 ---
-name: resolve-pr
+name: pr-resolve
 description: Take an existing GitHub PR and drive it back to green — resolve merge conflicts, fix failing CI, and address review comments — respecting Daniel's PR conventions (keep status, merge not rebase, no force-push, no summary comments). Use when handed a PR URL/number with "resolve conflicts", "failing CI", "has review comments", "changes requested", or similar.
 user_invocable: true
 argument-hint: "<pr-url|number> [--conflicts | --ci | --comments]"
@@ -10,7 +10,7 @@ argument-hint: "<pr-url|number> [--conflicts | --ci | --comments]"
 Take an already-open pull request and unblock it. Auto-detects what's wrong —
 merge conflicts, red CI, unresolved review comments — and resolves each. This is
 the counterpart to the repo's `pr` skill: `pr` opens/updates a PR from your local
-diff; `resolve-pr` fixes a PR that already exists.
+diff; `pr-resolve` fixes a PR that already exists.
 
 This skill is for the Outset monorepo (`Outset-AI/outset`).
 
