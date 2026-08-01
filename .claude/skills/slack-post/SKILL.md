@@ -50,14 +50,38 @@ Four parts, in this order. Drop any that don't apply.
 
 ## Length budget
 
-- **Findings / status post: under ~150 words.** Roughly 1,000 characters.
-- **Quick answer in a thread: 1–3 sentences.** No structure, no headers.
-- Hard cap is 5,000 chars, but anything over ~1,500 means you're writing a
-  document, not a message.
+The budget applies to **prose only**. Data is what this audience came for — never
+cut rows off a table to hit a word count.
 
-If the detail genuinely matters, post the short version and put the depth in a
-**threaded reply** — or link the Linear ticket / PR and let them click. Never make
-the top-level message carry the full analysis.
+**Prose — strict:**
+- Findings / status post: **120 words max**, excluding tables, code blocks, and
+  data rows.
+- Quick answer in a thread: **1–3 sentences.** No structure, no headers.
+- When there's a table, the prose gets *shorter*, not longer: one line of setup
+  above it, one line of what it means below. The table carries the rest.
+
+**Data — no length limit:**
+- Tables, per-org / per-day breakdowns, counts, ID lists — include every row that
+  matters. A 30-row table is fine and often better than a summary of it.
+- Apply discipline to **columns**, not rows: 4 columns or fewer. Wide tables scroll
+  badly on mobile Slack. Drop any column that doesn't change a reader's decision.
+- Sort by whatever the reader is deciding on (usually volume, descending) so the
+  answer is in the top rows.
+
+**The one hard limit is Slack's: 5,000 characters per message.** That's an API cap,
+not a style preference. If the data alone would exceed it, don't trim rows to
+squeeze under — restructure:
+
+- short top-level message, **table in a threaded reply**; or
+- post the full set as a **canvas** (`slack_create_canvas`) and link it; or
+- show the top N and link the Hex query / Linear ticket holding the rest.
+
+**Never truncate silently.** If you show a subset, label it and give the total —
+"top 10 of 47 orgs, full list in the thread". A table that looks complete but
+isn't will send someone to the wrong conclusion.
+
+Prose that doesn't fit the budget belongs in a threaded reply or the Linear
+ticket, not in the top-level message.
 
 ## Plain language
 
