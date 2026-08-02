@@ -1,135 +1,152 @@
 ---
 name: pr-drain
-description: Sweep every open PR you author and drive each one to its next state — fix conflicts and red CI, run the swarm before marking ready, fix incoming review comments and re-request review, mark green PRs ready — then report the short list of things that genuinely need your decision. Use for "drain my PRs", "what needs me", "check my open PRs", or on a loop.
+description: Sweep every open PR you author and drive each to its next state — dispatch swarms to CI, fix conflicts and red CI, harvest and fix review findings, re-request review, mark green PRs ready — then report the short list needing your decision. Fast fire-and-collect passes, designed to run on a loop. Use for "drain my PRs", "what needs me", or "check my open PRs".
 user_invocable: true
-argument-hint: "[--report] [--pr <n>] [--needs-me]"
+argument-hint: "[--report] [--pr <n>] [--needs-me] [--local]"
 ---
 
 # PR drain
 
-Your open PRs accumulate faster than you check them — 15+ sitting in draft, some
-idle for days, all of them green. This drains that queue autonomously and hands
-back only what actually needs your judgment.
+Your open PRs accumulate faster than you check them. This drains the queue in
+**short passes** and hands back only what needs your judgment.
 
-Three principles, in priority order:
+## Execution model: fire-and-collect, not block-and-wait
 
-1. **Quality up front beats a review cycle.** Every round trip starts with a
-   finding that a swarm would have caught before anyone looked. Never mark a PR
-   ready that hasn't been swarmed clean.
-2. **Act on anything reversible.** Conflicts, red CI, mechanical review findings,
-   marking ready — just do them and report. Don't stall a whole sweep on a
-   four-second decision.
-3. **Escalate only genuine decisions**, and make them impossible to lose track of.
+The expensive part of draining a PR is the **review** (~16 min per swarm run,
+measured). The cheap parts are classifying, fixing, and pushing.
 
-Composes `pr-resolve`, `pr-swarm-fix`, and `review-swarm`. Don't reimplement them.
+So never block on a review. **Dispatch it to CI and collect the result on a later
+pass.** `review-swarm.yml` runs on GitHub's runners:
+
+- **Off your box.** Your machine has 8 cores → a 6-agent cap, and one swarm spawns
+  8 lanes. Local swarms already saturate it; running two PRs at once just makes
+  both slower. Local parallelism is not available. CI's is.
+- **Parallel across PRs.** All 9 stale PRs can swarm simultaneously on GitHub.
+- **Two triggers:** automatically on `ready_for_review`, or any time by posting a
+  `/review-swarm` comment (`review-swarm-listen.yml` dispatches it — works on
+  drafts too).
+
+A drain pass is therefore **minutes**, not hours: it fires what needs firing,
+harvests what has landed, and exits. Pair it with `/loop 30m /pr-drain` and the
+queue drains itself.
+
+**Cost:** ~$0.50–$2 per CI swarm. A first full sweep of a stale queue is real money
+(9 PRs ≈ $10–20); steady state is near-zero because only moved SHAs re-dispatch.
+Say what you're about to spend if dispatching more than ~5 at once.
+
+Composes `pr-resolve` (fix conventions) and `pr-swarm-fix` (the local, blocking
+alternative — use it when actively iterating on one PR and you want the findings
+now). Don't reimplement either.
 
 ## Arguments
 
-- *(none)* — full sweep: classify every open PR you author, act, report.
-- `--report` — classify and report only. No pushes, no edits. Good first run.
-- `--pr <n>` — drain a single PR.
-- `--needs-me` — print the outstanding decision list and exit. No sweep.
+- *(none)* — full pass: classify, dispatch, harvest, fix, report.
+- `--report` — classify and report only. No dispatches, no pushes. Good first run.
+- `--pr <n>` — one PR.
+- `--needs-me` — print the outstanding decision list and exit.
+- `--local` — run swarms locally via `pr-swarm-fix` instead of dispatching to CI.
+  Slow (~16 min each, serial). Only when CI is unavailable.
 
-## Step 1 — Classify (fast, read-only)
+## Step 1 — Classify (seconds, read-only)
 
 ```bash
 gh pr list --author "@me" --state open --limit 100 \
-  --json number,title,isDraft,headRefName,baseRefName,createdAt,updatedAt,\
+  --json number,title,isDraft,headRefName,baseRefName,updatedAt,\
 mergeable,mergeStateStatus,reviewDecision,labels,statusCheckRollup
 ```
 
-For anything with review activity, also pull unresolved threads (the GraphQL
-`reviewThreads` query in `pr-resolve` Step 3).
+**Compute swarm coverage per PR** — this is what decides whether a review is owed,
+and it's the check that keeps the sweep cheap. Compare the last commit's
+`committedDate` against the most recent Review Swarm review's `submittedAt`:
 
-Bucket each PR. First match wins:
+```bash
+gh pr view <n> --json commits,reviews
+```
+
+- last swarm **≥** last push → **covered**, no review needed
+- pushed after the last swarm → **stale**
+- no swarm review at all → **never swarmed**
+
+On a typical queue most PRs are already covered (13 of 22, when this was written)
+— skipping those is the difference between a 2-minute pass and an all-day one.
+
+Bucket each PR, first match wins:
 
 | Bucket | Condition | Action |
 |---|---|---|
-| **Needs you** | unresolved thread that's a question, a scope call, or a suggestion worth pushing back on | no action — Step 4 |
-| **Review comments** | unresolved threads, all mechanical | review-fix loop (Step 3) |
-| **Conflicts** | `mergeable == CONFLICTING` | `pr-resolve --conflicts` |
-| **CI red** | failing aggregate check | `pr-resolve --ci` |
-| **Unswarmed** | draft, CI green, no `review-swarmed` label | `pr-swarm-fix` → then Ready |
-| **Ready** | draft, CI green, swarm clean | mark ready (Step 2) |
+| **Needs you** | unresolved thread that's a question, scope call, or worth pushing back on | none — Step 4 |
+| **Findings to fix** | swarm/reviewer findings not yet addressed | fix + re-dispatch (Step 3) |
+| **Conflicts** | `mergeable == CONFLICTING` | `pr-resolve --conflicts`, then re-dispatch |
+| **CI red** | failing aggregate check | `pr-resolve --ci`, then re-dispatch |
+| **Awaiting swarm** | swarm dispatched, no result yet | skip — collect next pass |
+| **Needs swarm** | stale or never swarmed | dispatch (Step 2) |
+| **Ready** | covered, clean, CI green, draft | mark ready (Step 2) |
 | **Mergeable** | ready, approved, no conflicts | report only — never merge |
-| **In flight** | CI still running | skip this pass |
 
-Work them in table order: someone waiting on you first, then what rots fastest.
-Print the classification before acting so the plan is visible.
+Print the classification before acting.
 
-## Step 2 — Mark ready when green
+## Step 2 — Dispatch and mark ready
 
-Daniel has explicitly authorized this: **a draft whose CI is green and whose swarm
-is clean gets marked ready** (`gh pr ready <n>`).
+**Dispatch a swarm** for anything stale or never-swarmed:
+
+```bash
+gh pr comment <n> --body "/review-swarm"
+```
+
+Returns immediately. Record that you dispatched it (and the head SHA at dispatch)
+so the next pass knows what it's waiting for and doesn't double-fire.
+
+**Mark ready** when the PR is covered by a clean swarm at the current head SHA and
+CI is green:
 
 ```bash
 gh pr ready <n>
 ```
 
-This is the one status change that's allowed. The standing rule that a PR is
-**never moved back to draft** still holds absolutely — no `gh pr ready --undo`,
-ever.
+This is the one status change allowed — **never move a PR back to draft**, ever.
 
-**Marking ready fires a CI swarm — own its output.** `review-swarm.yml` triggers
-on `ready_for_review` and posts findings as `github-actions` (18 of the last 25
-merged PRs have one). It reviews the SHA you just marked ready. So marking ready
-is not the end of the PR's drain — it *starts* one more review:
+Marking ready **auto-fires a CI swarm** on that SHA, so it doubles as a dispatch.
+That's the design: the swarm that would have caught something is now running
+before any human looks. Don't use `no-review-swarm` to dodge it.
 
-1. Confirm `pr-swarm-fix` converged on the **current** head SHA before marking
-   ready. That's what makes the CI swarm come back clean.
-2. After marking ready, **wait for the CI swarm** and treat its findings as part
-   of this drain: fix the mechanical ones, escalate the judgment ones (Step 4).
-   Don't leave them sitting — an unhandled `github-actions` swarm comment is
-   exactly the thing a coworker reads days later and relays back to you.
-3. Don't use the `no-review-swarm` label to dodge the trigger. It hides the
-   review; it doesn't make the PR better.
+Two guards on marking ready:
+- Only when the last **completed, clean** swarm covers the **current** head SHA.
+- Never with unresolved Critical/High/Medium findings.
+- The `review-swarmed` label is **not** evidence of either — it's re-applied every
+  pass regardless of outcome. Judge by the coverage comparison in Step 1.
 
-Two guards:
-- **Never mark ready until the review has converged.** Run `pr-swarm-fix`, which
-  loops swarm → fix → re-swarm until a completed pass finds nothing, then applies
-  the Fable + GPT-5.6 gate. One pass is not enough: it only ever reviewed the code
-  as it was *before* the fixes, and a single model has a single blind spot. A PR
-  that goes out on one pass is how a review cycle starts.
-- **The `review-swarmed` label is not proof of convergence** — it's re-applied on
-  every pass and says nothing about whether findings were resolved. Judge by
-  `pr-swarm-fix`'s own report.
-- **Never mark ready with unresolved findings** at Critical/High/Medium.
+## Step 3 — Harvest findings and fix
 
-## Step 3 — The review-fix loop
+For each PR whose swarm has landed since the last pass (author `github-actions`,
+or a coworker's), and for human review comments:
 
-When a reviewer (human or their AI swarm) leaves findings, close the loop in one
-pass instead of over three days:
-
-1. **Read every unresolved thread.** Split them:
-   - **Mechanical** — a real defect, a missing test, a convention violation, a
-     concrete suggested change. Fix it.
-   - **Judgment** — a question, a scope challenge ("is this in scope?"), an
-     architectural opinion, or anything you'd push back on. → Step 4. Do **not**
-     guess at these, and do not implement a change you think is wrong just to
-     clear a thread.
-2. **Fix the mechanical ones** via `pr-resolve --comments` (it owns the
-   conventions: follow-up commits, no force-push, pre-commit, no summary comment).
-3. **Re-request review** so the ball is visibly back in their court — this is the
-   step that actually ends the cycle:
+1. **Split the findings:**
+   - **Mechanical** — real defect, missing test, convention violation, concrete
+     suggested change → fix.
+   - **Judgment** — a question, scope challenge, architectural opinion, or
+     anything you'd push back on → Step 4. Never guess, and never implement a
+     change you think is wrong just to clear a thread.
+2. **Fix the mechanical ones** via `pr-resolve --comments` (owns the conventions:
+   follow-up commits, no force-push, pre-commit, no summary comment). Reject wrong
+   findings with a one-line rationale; track rejections so they aren't re-litigated
+   next pass.
+3. **Re-dispatch after pushing.** The CI trigger is `[opened, ready_for_review,
+   reopened]` — **not** `synchronize` — so your fix commit is *not* automatically
+   re-reviewed. Post `/review-swarm` again to cover the new SHA. Skipping this is
+   how unreviewed code reaches a human.
+4. **Re-request review** from any human reviewer so the ball is visibly theirs:
    ```bash
-   gh pr edit <n> --add-reviewer <original-reviewer-login>
+   gh pr edit <n> --add-reviewer <login>
    ```
-4. **Don't auto-resolve the threads.** Resolving is the reviewer's call; doing it
-   for them hides whether they agreed.
+5. **Don't auto-resolve threads** — that's the reviewer's call.
 
-If a PR comes back a second time with findings in the same area, stop looping and
-escalate it to Step 4 — two rounds on one topic means there's a disagreement, not
-a defect.
+If a PR returns findings in the same area twice, stop looping and escalate to
+Step 4: two rounds on one topic is a disagreement, not a defect.
 
 ## Step 4 — Track what needs you
 
-The point of the sweep is that this list is *short* and *nothing falls off it*.
-
 Persist to `~/.claude/pr-drain/needs-me.md`, keyed by PR + thread, so items survive
-between runs and accumulate an age. Update it every sweep: add new items, drop
-resolved ones, and age the rest.
-
-Each entry:
+passes and accumulate an age. Each pass: add new, drop resolved, age the rest.
 
 ```markdown
 ## PR #3690 — [OUT-7506] Bind Stripe setup to subscription
@@ -140,34 +157,26 @@ Each entry:
 - **Link:** <thread url>
 ```
 
-Rules that keep it useful:
-- **One line for the decision**, phrased as a question with options — not a summary
-  of the discussion.
-- **Always give your read and your confidence.** A decision presented with a
-  recommendation takes ten seconds; one presented as an open question takes ten
-  minutes.
-- **Age everything.** Anything over 3 days goes at the top and gets flagged.
-- **Keep it to genuine decisions.** If it's on this list and Daniel would say "just
-  do it," it shouldn't have been here — that's the failure mode to avoid.
+- One line for the decision, phrased as a question with options.
+- **Always give your read and your confidence** — a recommendation takes ten
+  seconds to accept; an open question takes ten minutes.
+- Anything over 3 days sorts to the top, flagged.
+- If Daniel would look at an entry and say "just do it," it shouldn't be here.
 
 ## Step 5 — Report
 
-Lead with the two things that matter:
+1. **Needs you (N)** — Step 4 list, oldest first. Say so plainly if empty.
+2. **Drained (N)** — one line per PR: what it was, what you did, new state.
+3. **In flight** — swarms dispatched and awaiting results (collect next pass), CI
+   still running.
+4. **Mergeable now** — **never merge.** Report and let Daniel do it.
 
-1. **Needs you (N)** — the Step 4 list, oldest first. If empty, say so plainly.
-2. **Drained (N)** — one line per PR: what it was, what you did, the new state.
+Don't post any of this to Slack or the PRs. If he wants it in Slack, route it
+through `slack-post`.
 
-Then, briefly: still in flight (CI running), and mergeable-now PRs.
+## On a loop
 
-**Never merge.** Merging is the one irreversible step; report that a PR is
-mergeable and let Daniel do it.
-
-Don't post any of this to Slack or the PRs — it's a report for him. (If he does
-want it in Slack, route it through `slack-post`.)
-
-## Running it on a loop
-
-The sweep is idempotent and safe to repeat — every run re-derives state from
-GitHub. `/loop 30m /pr-drain` keeps the queue drained continuously. On a loop,
-report only what *changed* since the previous pass, plus any new "needs you"
-items; don't re-print a stable queue every 30 minutes.
+Idempotent — every pass re-derives state from GitHub. `/loop 30m /pr-drain` is the
+intended mode: each pass collects the previous pass's swarms and fires the next
+round. Report only what **changed** since the last pass plus new "needs you" items;
+don't reprint a stable queue every 30 minutes.
