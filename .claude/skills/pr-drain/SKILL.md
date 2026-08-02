@@ -71,8 +71,14 @@ This is the one status change that's allowed. The standing rule that a PR is
 ever.
 
 Two guards:
-- **Never mark ready unswarmed.** If there's no `review-swarmed` label, run
-  `pr-swarm-fix` first. A PR that goes out unswarmed is how a review cycle starts.
+- **Never mark ready until the review has converged.** Run `pr-swarm-fix`, which
+  loops swarm → fix → re-swarm until a completed pass finds nothing, then applies
+  the Fable + GPT-5.6 gate. One pass is not enough: it only ever reviewed the code
+  as it was *before* the fixes, and a single model has a single blind spot. A PR
+  that goes out on one pass is how a review cycle starts.
+- **The `review-swarmed` label is not proof of convergence** — it's re-applied on
+  every pass and says nothing about whether findings were resolved. Judge by
+  `pr-swarm-fix`'s own report.
 - **Never mark ready with unresolved findings** at Critical/High/Medium.
 
 ## Step 3 — The review-fix loop
