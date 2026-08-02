@@ -1,6 +1,6 @@
 ---
 name: pr-drain
-description: Sweep every open PR you author and drive each to its next state — dispatch swarms to CI, fix conflicts and red CI, harvest and fix review findings, re-request review, mark green PRs ready — then report the short list needing your decision. Fast fire-and-collect passes, designed to run on a loop. Use for "drain my PRs", "what needs me", or "check my open PRs".
+description: Sweep every open PR you author and drive each as far as it can go without you — dispatch swarms to CI, fix conflicts and red CI, harvest and fix review findings, re-request review — then report which PRs are ready for you to mark ready, plus the short list needing your decision. Never changes draft state. Fast fire-and-collect passes, designed to run on a loop. Use for "drain my PRs", "what needs me", or "check my open PRs".
 user_invocable: true
 argument-hint: "[--report] [--pr <n>] [--needs-me] [--local]"
 ---
@@ -80,12 +80,17 @@ Bucket each PR, first match wins:
 | **CI red** | failing aggregate check | `pr-resolve --ci`, then re-dispatch |
 | **Awaiting swarm** | swarm dispatched, no result yet | skip — collect next pass |
 | **Needs swarm** | stale or never swarmed | dispatch (Step 2) |
-| **Ready** | covered, clean, CI green, draft | mark ready (Step 2) |
+| **Ready to flip** | draft, CI green, clean swarm covers current SHA | **report only — Daniel flips it** (Step 2) |
 | **Mergeable** | ready, approved, no conflicts | report only — never merge |
 
 Print the classification before acting.
 
-## Step 2 — Dispatch and mark ready
+## Step 2 — Dispatch swarms; never touch draft state
+
+**Never change a PR's draft/ready state.** No `gh pr ready`, no `gh pr ready
+--undo`, in either direction. Flipping a PR out of draft is the moment Daniel says
+"this is worth someone else's time," and he makes that call himself. The drain's
+job is to get each PR *to* that line and tell him which ones are standing on it.
 
 **Dispatch a swarm** for anything stale or never-swarmed:
 
@@ -96,24 +101,26 @@ gh pr comment <n> --body "/review-swarm"
 Returns immediately. Record that you dispatched it (and the head SHA at dispatch)
 so the next pass knows what it's waiting for and doesn't double-fire.
 
-**Mark ready** when the PR is covered by a clean swarm at the current head SHA and
-CI is green:
+This comment path is what makes the no-flip rule workable. `review-swarm.yml`
+auto-fires on `ready_for_review` — which now never happens on the drain's watch —
+but `review-swarm-listen.yml` turns a `/review-swarm` comment into the same
+workflow run, and it works on drafts. Coverage never depends on flipping anything.
 
-```bash
-gh pr ready <n>
-```
+**A PR is "ready to flip"** when all three hold. Report it; don't act on it:
 
-This is the one status change allowed — **never move a PR back to draft**, ever.
+- CI green (judge by the aggregate jobs, not shard rows), **and**
+- the last **completed, clean** swarm covers the **current** head SHA, **and**
+- no unresolved Critical/High/Medium findings.
 
-Marking ready **auto-fires a CI swarm** on that SHA, so it doubles as a dispatch.
-That's the design: the swarm that would have caught something is now running
-before any human looks. Don't use `no-review-swarm` to dodge it.
+The `review-swarmed` label is **not** evidence of any of those — it's re-applied on
+every pass regardless of outcome. Judge by the Step 1 coverage comparison and
+`pr-swarm-fix`'s report.
 
-Two guards on marking ready:
-- Only when the last **completed, clean** swarm covers the **current** head SHA.
-- Never with unresolved Critical/High/Medium findings.
-- The `review-swarmed` label is **not** evidence of either — it's re-applied every
-  pass regardless of outcome. Judge by the coverage comparison in Step 1.
+**When Daniel flips one, a CI swarm fires on that SHA** (`ready_for_review` is a
+trigger; 18 of the last 25 merged PRs carry a `github-actions` swarm review). A
+later pass sees those findings as an unharvested review — pick them up in Step 3
+like any other. Don't use the `no-review-swarm` label to suppress the trigger; it
+hides the review rather than improving the PR.
 
 ## Step 3 — Harvest findings and fix
 
@@ -165,11 +172,20 @@ passes and accumulate an age. Each pass: add new, drop resolved, age the rest.
 
 ## Step 5 — Report
 
-1. **Needs you (N)** — Step 4 list, oldest first. Say so plainly if empty.
-2. **Drained (N)** — one line per PR: what it was, what you did, new state.
-3. **In flight** — swarms dispatched and awaiting results (collect next pass), CI
+1. **Ready to flip (N)** — the PRs Daniel can mark ready right now. This is the
+   headline: it's the one action the drain deliberately leaves to him, so it goes
+   first and never gets buried. One line each — PR number, title, and *why* it
+   qualifies (CI green + swarm clean at `<short-sha>`). Give him the command:
+
+   ```bash
+   gh pr ready <n>    # or the whole batch
+   ```
+
+2. **Needs you (N)** — Step 4 decision list, oldest first. Say so plainly if empty.
+3. **Drained (N)** — one line per PR: what it was, what you did, new state.
+4. **In flight** — swarms dispatched and awaiting results (collect next pass), CI
    still running.
-4. **Mergeable now** — **never merge.** Report and let Daniel do it.
+5. **Mergeable now** — **never merge.** Report and let Daniel do it.
 
 Don't post any of this to Slack or the PRs. If he wants it in Slack, route it
 through `slack-post`.
@@ -178,5 +194,14 @@ through `slack-post`.
 
 Idempotent — every pass re-derives state from GitHub. `/loop 30m /pr-drain` is the
 intended mode: each pass collects the previous pass's swarms and fires the next
-round. Report only what **changed** since the last pass plus new "needs you" items;
-don't reprint a stable queue every 30 minutes.
+round. Report only what **changed** since the last pass — don't reprint a stable
+queue every 30 minutes.
+
+**Two exceptions to the changed-only rule**, because both are waiting on Daniel and
+silence reads as "nothing to do":
+
+- **Any PR newly entering "ready to flip"** is always announced, with the
+  `gh pr ready` command.
+- **The standing counts are always shown**, even when nothing changed — one line:
+  `3 ready to flip · 2 need you · 4 in flight`. A count is cheap; a forgotten
+  queue is what this skill exists to prevent.
