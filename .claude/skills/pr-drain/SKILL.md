@@ -70,6 +70,20 @@ This is the one status change that's allowed. The standing rule that a PR is
 **never moved back to draft** still holds absolutely — no `gh pr ready --undo`,
 ever.
 
+**Marking ready fires a CI swarm — own its output.** `review-swarm.yml` triggers
+on `ready_for_review` and posts findings as `github-actions` (18 of the last 25
+merged PRs have one). It reviews the SHA you just marked ready. So marking ready
+is not the end of the PR's drain — it *starts* one more review:
+
+1. Confirm `pr-swarm-fix` converged on the **current** head SHA before marking
+   ready. That's what makes the CI swarm come back clean.
+2. After marking ready, **wait for the CI swarm** and treat its findings as part
+   of this drain: fix the mechanical ones, escalate the judgment ones (Step 4).
+   Don't leave them sitting — an unhandled `github-actions` swarm comment is
+   exactly the thing a coworker reads days later and relays back to you.
+3. Don't use the `no-review-swarm` label to dodge the trigger. It hides the
+   review; it doesn't make the PR better.
+
 Two guards:
 - **Never mark ready until the review has converged.** Run `pr-swarm-fix`, which
   loops swarm → fix → re-swarm until a completed pass finds nothing, then applies

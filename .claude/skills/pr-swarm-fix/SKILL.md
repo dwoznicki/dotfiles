@@ -10,17 +10,26 @@ argument-hint: "<pr-url|number> [--sev=critical,high,medium] [--cycles=3] [--no-
 Drive a PR to the point where a human reviewer — or their AI swarm — finds
 nothing. One swarm pass does **not** get you there.
 
-**Why one pass isn't enough.** Two independent reasons, and the loop below fixes
-the first while the final gate fixes the second:
+**Why one pass isn't enough — the concrete reason.** `.github/workflows/review-swarm.yml`
+fires **automatically on `ready_for_review`**. A second swarm isn't optional or
+hypothetical: the repo runs one on your PR the moment you mark it ready, on
+`claude-opus-5[1m]` (the `REVIEW_SWARM_MODEL` repo var). Of the last 25 merged
+PRs, **18 carry a `github-actions` Review Swarm review** — more than all
+human-posted swarms combined.
 
-1. **The swarm reviewed code you then changed.** Cycle 1 reviews commit A. You fix
-   its findings and push commit B — which no swarm has ever looked at. Fixes
-   introduce defects at roughly the rate original code does. A "clean" verdict on
-   A says nothing about B.
-2. **One model has one blind spot.** Re-running the *same* swarm mostly re-finds
-   the same things. What surfaces genuinely new defects is a *different* model
-   looking at the same diff — which is why the final gate is Fable + GPT-5.6
-   rather than a fourth swarm cycle.
+That CI swarm reviews **your final SHA** — which your local swarm never saw. The
+sequence that burns you:
+
+> swarm the draft → fix findings → push (**new SHA**) → mark ready → CI swarms
+> that new SHA → new findings → round trip
+
+So the target isn't "N passes." It's: **the last local swarm must cover the exact
+SHA you mark ready**, so CI's independent pass finds nothing. Anything you push
+after your last clean swarm is unreviewed code that CI *will* review.
+
+A secondary effect: same-SHA re-runs still differ (LLM sampling), and a different
+model has a different blind spot — which is what the optional final gate is for.
+That's diminishing returns; the SHA alignment above is the real lever.
 
 This costs real machine time (three swarm cycles plus a two-lane final review can
 run 30–60 min). That's the trade: burn machine time to avoid a human round trip
@@ -86,7 +95,17 @@ Each cycle:
    pre-commit, commit, and push — so the *next* cycle reviews the fixed head.
 
 **Exit** when a swarm run **that demonstrably completed** surfaces no in-scope
-findings that are neither fixed nor rejected — or at the cycle cap.
+findings that are neither fixed nor rejected — **and that run's head SHA is still
+the current head SHA.** Verify it:
+
+```bash
+git rev-parse HEAD          # must equal the SHA the clean swarm reviewed
+```
+
+If you pushed anything after the last clean swarm — even a one-line fix, even a
+test-only change — that code is unreviewed, and CI's `ready_for_review` swarm will
+review it. Run one more cycle. **This is the condition that actually matters**;
+the cycle cap is just a runaway guard.
 
 **A crashed swarm also reports zero findings.** A dead subagent lane, a codex 401,
 a timed-out Lane F, or a "degraded consensus" verdict all look like a clean pass.
