@@ -15,11 +15,13 @@ task Daniel hands over. It does three things the underlying skills don't:
    production triage.
 3. **Reports back through `slack-post`**, so the write-up is short and readable.
 
-It composes existing skills; it does not reimplement them:
+It composes existing skills; it does not reimplement them. **`oncall-triage` is the
+general fallback, not the default** — check the specialist table in Step 3 first.
+A specialist already knows the tables, the failure modes, and the queries for its
+subsystem; reaching for `oncall-triage` when one applies means re-deriving all of
+that by hand.
 
-- **`oncall-triage`** owns the investigation mechanics (CloudWatch, Sentry, Hex,
-  codebase, timestamps, log groups). Delegate to it — don't re-derive its queries.
-- **`slack-post`** owns anything posted to Slack.
+- **`slack-post`** owns anything posted to Slack. Always.
 - **`code-owners`** answers "who should pick this up?".
 - **`cs-bug-summary`** produces the CS/customer-facing version.
 
@@ -67,13 +69,35 @@ intuition gets it wrong.
 | "What is X?" / "Is autopilot's read correct?" | Read the code, answer. No triage. |
 | "Is this serious?" / "What's your read?" | Scope it: how many affected, is it ongoing. Enough to make a call. |
 | "Is this a known issue?" | Step 2 only. |
-| "Please investigate" / "why is this stuck?" / "debug this" | Full `oncall-triage`. |
 | "Who should pick this up?" | `code-owners`, skip the investigation. |
 | "Do we have a ticket?" | Step 2, then create one if not (see Step 5). |
+| "Please investigate" / "why is this stuck?" / "debug this" | Route by **subsystem** — the table below. |
 
-When it warrants the full path, invoke `oncall-triage`
-(`Skill(skill="oncall-triage")`) with everything Step 1 gathered pre-filled, so it
-skips its own context-gathering.
+### Route to the specialist before reaching for `oncall-triage`
+
+Match on the subsystem the symptom names, not on the words "investigate" or
+"debug". These skills each encode the schema, failure modes, and queries for one
+surface — work a matching one by hand and you'll redo all of it, worse.
+
+| The symptom names… | Use |
+|---|---|
+| The **AI study agent** did something odd on a study (wrong questions, bad screener, wrong structure) | `debug-study-agent <survey_id \| thread_id>` — per-turn transcript + the LLM calls behind each turn |
+| A **report / Insights** merged or deduped questions oddly across a template's studies | `debug-question-merge` |
+| A **Figma prototype heatmap** ("Interaction Maps") missing or broken on Insights | `debug-figma-heatmap` |
+| Something **visually** wrong — clipped, overflowing, misaligned, wrong size | `debug-css-layout` (real browser + CDP; source alone won't settle it) |
+| **Whitelabel / iframe** chrome, branding, or settings visibility wrong | `spotcheck-whitelabel` |
+| A **CI test** flaking | `fix-flaky-backend-tests` / `fix-flaky-frontend-tests` |
+| A bug you want **pinned by a failing test** before fixing | `write-e2e-test --reproduce <OUT-####> [slack-url]` |
+| A **ticket** whose real blast radius looks undescribed | `refine-ticket` |
+| **Anything else** — prod errors, latency, stuck jobs, OOMs, disconnects, data questions | `oncall-triage` (CloudWatch / Sentry / Hex / codebase) |
+
+Invoke the chosen skill with everything Step 1 gathered pre-filled (study ID,
+thread ID, timestamps, org) so it skips its own context-gathering. More than one
+can apply — a study-agent bug with a visual symptom wants both.
+
+If a specialist comes back empty or says the case is out of its scope (e.g.
+`debug-study-agent` on a v1 one-shot study with no thread), say so plainly and
+fall back to `oncall-triage` — don't quietly present "no data" as "no problem."
 
 **State confidence honestly.** "Confirmed — here's the log line" and "likely, but
 I couldn't reproduce" are different answers. Never dress a hypothesis as a finding.
