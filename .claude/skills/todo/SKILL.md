@@ -1,176 +1,212 @@
 ---
 name: todo
-description: Daniel's persistent priority TODO list. Reads and updates ~/.claude/todo/todo.md, auto-closes items whose source work has landed, and suggests new items from Linear, GitHub, and Slack — including commitments he made in threads. Priorities are his; the skill never re-ranks. Use for "todo", "what should I work on", "my list", "add to my todo", "bump X to urgent", or the daily morning digest.
+description: Daniel's daily priority list, stored as a private Linear document. Clears items he checked off, auto-checks work that landed (PR merged, review submitted, issue Done), refreshes ages, and suggests new items from Linear, GitHub, and Slack — including commitments he made in threads. Priorities are his; the skill never re-ranks. Use for "todo", "what should I work on", "my list", "add to my todo", "bump X", or the daily morning run.
 user_invocable: true
-argument-hint: "[digest | add <text> | done <id> | bump <id> <urgent|high|medium|low> | dismiss <id> | suggest]"
+argument-hint: "[digest | add <text> | bump <id> <urgent|high|medium|low> | drop <id> | suggest]"
 ---
 
 # TODO
 
-A persistent, human-owned priority list that Claude maintains but does not own.
+A daily priority list that Claude maintains and Daniel owns.
 
-**The list lives at `~/.claude/todo/todo.md`** — machine-local, deliberately *not*
-in the dotfiles repo, which is public and would leak customer names, ticket
-detail, and Slack context. Create the directory on first run. Never move this file
-into `~/.claude/skills/` or anywhere under `~/dotfiles/`.
+## Where it lives
+
+A **private Linear document** titled exactly **`Daniel — Daily TODO`**.
+
+Find it every run — no local state, so this works from any machine or a cloud
+routine:
+
+```
+mcp__claude_ai_Linear__list_documents(query="Daniel — Daily TODO", fields=["title","url","content"])
+```
+
+**If it doesn't exist, stop and ask Daniel to create it.** Don't create it yourself:
+`save_document` requires a parent (`team` / `project` / `issue` / `initiative` /
+`cycle`) on create and has **no private flag**, so anything this skill creates would
+be visible to whoever can see that parent. Two docs in the workspace already have
+all-null parents, so Linear supports genuinely personal pages — the MCP just can't
+make one. He creates it once in the Linear UI as a private page; from then on this
+skill only ever **updates by `id`**, which doesn't touch the parent and so can't
+leak it.
+
+Prefer `patch` over `content` for edits — flipping one checkbox shouldn't resend
+the whole document.
 
 ## The one rule
 
 **Daniel owns the priorities. The skill never re-ranks.**
 
-Whatever section an item sits in is its priority, whether he typed it there or
-asked for it. The skill may *suggest* a change — "T-07 has been Medium 12 days and
-its Linear ticket went Urgent; bump?" — and then leave it alone. An auto-generated
-list that keeps overruling its owner's judgment gets abandoned in a week.
+Whatever section an item sits in is its priority, whether he put it there or asked
+for it. The skill may *suggest* a change — "🎫 OUT-9182 went Urgent in Linear but
+sits in Medium here; bump?" — then leave it alone. Same for wording: if he rewrote
+an item, keep his text verbatim.
 
-Same for wording: if he rewrote an item, keep his text verbatim.
+## Icon set
 
-## File format
+Three axes. Severity and source always present; flags only when true.
+
+**Severity** — same scale `review-swarm` posts on PRs, so it reads the same way:
+
+| | |
+|---|---|
+| 🔴 | Urgent |
+| 🟠 | High |
+| 🟡 | Medium |
+| 🟢 | Low |
+
+**Source** — what kind of thing this is:
+
+| | |
+|---|---|
+| 🔀 | pull request |
+| 🎫 | Linear issue |
+| 💬 | Slack thread |
+| 🐛 | Sentry / production error |
+| 📊 | data / analysis question |
+| 🛠 | your own tooling, skills, infra |
+
+**Flags** — only shown when they apply:
+
+| | |
+|---|---|
+| 🤝 | you committed to this in a thread |
+| 👀 | someone is blocked waiting on you |
+| 🚫 | blocked on someone else |
+| ⏰ | past its due date |
+| 🕸 | stale — no movement in 10+ days |
+| 🤖 | auto-checked by the job, not by you |
+
+Don't invent icons outside this set. A key that grows every week stops being a key.
+
+## Item format
+
+Three lines. Severity + source + title + due on line 1, one sentence of why on
+line 2, links and flags and age on line 3.
 
 ```markdown
-# TODO
-_updated 2026-08-03 · 2 urgent · 3 high · 4 medium · 1 low_
+- [ ] 🔴 🔀 **"None of the above" no longer screens out immediately** ⏰ 4 Aug
+  Participants who pick it now finish the whole screener instead of being dropped, so a Gap study is collecting responses it should have rejected.
+  [OUT-9739](url) · [#3821](url) · 👀 CS waiting · added 2 Aug · 2d
+```
 
-## Urgent
-- [ ] **T-04** "None of the above" no longer screens out immediately (Gap study)
-      live participant impact · [OUT-9739](url) · added 08-02 · 1d
+- **One sentence on line 2**, and it says *why it matters*, not what the thing is.
+  If it needs two sentences it belongs in the Linear ticket.
+- **Due date** only when something real sets it — a customer commitment, a release,
+  a promise in a thread. Don't invent due dates; an invented one trains him to
+  ignore the real ones.
+- **Age** in days since added. It's what makes rot visible.
+- Stable IDs aren't needed — Linear anchors on text, and `patch` matches on it.
+  Refer to items by their bolded title when he says "bump the screener one".
 
-## High
-- [ ] **T-07** Reply to Fred on the quota-recompute PR
-      [#3817](url) · added 07-30 · 4d
+Document shape:
 
-## Medium
-## Low
+```markdown
+## 🔴 Urgent
+## 🟠 High
+## 🟡 Medium
+## 🟢 Low
 
 ## Suggested
-<!-- Claude's picks. Daniel promotes with `bump`, or kills with `dismiss`. -->
-- **S-02** Review request waiting 3d — [#3902](url) from @haivo-outset
+<!-- Claude's picks. Daniel moves them up, or moves them to Not doing. -->
 
-## Done (last 7 days)
-- [x] **T-01** Ship the screener soft-delete fix · closed 08-02 (#3645 merged)
-
-## Dismissed
+## Not doing
 <!-- never suggest these again -->
-- `pr-3361` — "closing that PR instead" (08-01)
+- 🔀 #3361 — closing the PR instead (1 Aug)
 ```
 
-Rules for the format:
+## The daily run (`digest`, the default)
 
-- **Stable IDs.** `T-nn` for list items, `S-nn` for suggestions. Never reuse a
-  number, so "bump T-04" always means the same thing. Track the high-water mark.
-- **Two lines per item, max.** Title line, then a context line: why it matters,
-  the link, when added, age. Anything longer belongs in the Linear ticket.
-- **Age every item.** Days since added. It's the signal that something is rotting.
-- Keep `Done` to the last 7 days, then drop. It exists so the morning digest can
-  say what landed, not as an archive.
+In this order:
 
-## Modes
+**1. Read the document first.** Always. His edits are the source of truth; never
+regenerate from scratch.
 
-### `digest` (default, and what the daily run uses)
+**2. Clear what's checked.** Every `- [x]` item is **removed** — checked items do
+not survive to the next day. That's the point: the list only ever shows live work.
+Report what you cleared in the run summary so there's one moment of visibility
+before it's gone.
 
-1. **Read the file first.** Always. Never regenerate from scratch — his edits and
-   priorities are the source of truth.
-2. **Auto-close what's landed** (below).
-3. **Refresh ages** and re-emit the counts line.
-4. **Suggest** up to **5** new items (below).
-5. **Print the digest** (below). Don't print the whole file.
+**3. Auto-check what landed.** Mark `- [x]` and add 🤖, so tomorrow's run clears it:
 
-### `add <text>`
-Append to the section he names, or **Medium** if unspecified. Assign the next `T-nn`.
+| item | done when |
+|---|---|
+| 🔀 PR he authored | `gh pr view <n> --json state` → `MERGED` |
+| 🔀 review requested of him | he submitted a review — `gh pr view <n> --json reviews` contains one by `dan-woz` at/after the request |
+| 🎫 Linear issue | `get_issue` status is Done or Canceled |
+| 💬 Slack commitment | not detectable — leave it, and flag 🕸 at 7 days |
 
-### `done <id>` / `bump <id> <priority>` / `dismiss <id>`
-Exactly what they say. `dismiss` on a suggestion moves its source key into
-**Dismissed** permanently. `bump` on an `S-nn` promotes it into the list as a `T-nn`.
+Auto-checking is the one place the skill decides something is finished, so record
+*what* closed it (`#3645 merged`, `OUT-9196 → Done`) on line 3. A wrong auto-check
+is invisible otherwise.
 
-### `suggest`
-Just the suggestion pass, no digest.
+**4. Refresh ages and flags.** Recompute `d`, add 🕸 past 10 days, ⏰ past due.
 
-## Auto-close: detect completion, don't ask for it
+**5. Suggest** — up to 5, into **Suggested** only (below).
 
-Ticking boxes by hand is how lists die. Each pass, check whether an item's source
-work has landed and close it without being asked:
+**6. Report the digest** — short (below). Don't print the document back.
 
-- **PR item** → `gh pr view <n> --json state,mergedAt`; `MERGED` → Done.
-- **Linear item** → `mcp__claude_ai_Linear__get_issue`; status Done/Canceled → Done.
-- **Slack commitment** → can't be auto-detected. Leave it; flag at 7 days
-  ("you said you'd take this a week ago — still yours?").
+## Suggestions — three sources, 5 max
 
-Note in the Done entry *what* closed it (`#3645 merged`, `OUT-9196 → Done`), so the
-digest can report it and he can spot a wrong auto-close.
+Never write suggestions into a priority section. Prioritising is his call; the
+skill's job is only to make sure nothing reaches him unnoticed.
 
-## Suggestions — three sources, capped at 5
-
-Land them in **Suggested**, never straight into the prioritized list. Prioritizing
-is his call; the skill's job is to make sure nothing reaches him unnoticed.
-
-**Linear** — issues assigned to him that aren't Done:
-```
-mcp__claude_ai_Linear__list_issues(assignee="me", state="started")
-```
-Prefer ones with no recent activity, or whose priority is above where they sit on
-his list.
+**Linear** — `list_issues(assignee="me", state="started")`. Favour issues with no
+recent activity, or whose Linear priority outranks where they sit here.
 
 **GitHub** — the gap `pr-drain` doesn't cover:
-- **Review requests on him**: `gh pr list --search "review-requested:@me --state=open"`.
-  `pr-drain` only handles PRs he *authors*, so this is the genuinely additive one —
-  and someone else is blocked on each.
-- His own PRs: **read `pr-drain`'s output rather than re-deriving it** — its
-  ready-to-flip list and `~/.claude/pr-drain/needs-me.md`. Don't duplicate that
-  skill's logic or its findings.
+- **Review requests on him**: `gh pr list --search "review-requested:@me" --state open`.
+  `pr-drain` only handles PRs he *authors*, so these are invisible today and
+  someone is blocked on each → 👀.
+- His own PRs: read `pr-drain`'s ready-to-flip list and
+  `~/.claude/pr-drain/needs-me.md` rather than re-deriving them.
 
-**Slack** — two patterns, in priority order:
-1. **Commitments he made.** Threads where he said "I'll take this", "I'll look",
-   "let me check", "I'll follow up" and nothing shipped since. These are the
-   highest-value suggestions and nothing else tracks them — search
-   `from:@Daniel "I'll"` and similar, then check whether the thread resolved.
-2. **Direct asks awaiting him** — `@`-mentions with a question and no reply from
-   him.
+**Slack** — in priority order:
+1. **Commitments he made** — threads where he said "I'll take this", "I'll look",
+   "let me check", and nothing shipped since. → 🤝. Nothing else tracks these and
+   they're the highest-value suggestions.
+2. **Direct asks awaiting him** — an `@`-mention with a question and no reply.
 
 **Dedup, hard:**
-- Skip anything already on the list (match by ticket ID / PR number / thread ts,
-  not by title text).
-- Skip anything in **Dismissed**, forever. A suggestion that reappears after he
-  killed it is worse than no suggestion.
-- **5 per pass, maximum.** Rank by "someone is blocked" > "he promised it" >
-  "it's aging". If more qualify, say how many were held back rather than silently
-  truncating.
+- Skip anything already on the list — match on ticket ID / PR number / thread ts,
+  never on title text.
+- Skip anything under **Not doing**, permanently. A suggestion that returns after
+  he killed it is worse than no suggestion.
+- **5 per run, max**, ranked 👀 blocked-on-you > 🤝 promised > 🕸 aging. If more
+  qualify, say how many were held back — never truncate silently.
 
 ## The digest
 
-Short. It's a morning glance, not a report.
+A morning glance, not a report.
 
 ```
-TODO — 3 Aug · 2 urgent · 3 high · 4 medium
+TODO · 4 Aug · 🔴 2 · 🟠 3 · 🟡 4
 
-Urgent
-  T-04  "None of the above" screen-out regression (Gap)      2d
-  T-09  Reply to Fred — quota recompute PR                   1d
+🔴 🔀 "None of the above" screen-out regression (Gap)   ⏰ 4 Aug · 2d
+🔴 🎫 Rotate expired EmailVerify rows                    3d
+🟠 💬 Reply to Fred — quota recompute                    🤝 4d
+🟠 🛠 Wire the daily todo timer                          1d
 
-Aging  T-07 High, 12d — no movement since 22 Jul
-Landed T-01 (#3645 merged), T-03 (OUT-9196 → Done)
+🤖 Cleared 3 done: #3645 merged · OUT-9196 → Done · reviewed #3902
+🕸 Aging: 🟠 "Publish-validation error union" — 12d, no movement
 
-Suggested (2, 1 held back)
-  S-05  Review request 3d old — #3902 from @haivo-outset
-  S-06  You said "I'll take this" on the transcode thread 6d ago
+Suggested 2 (3 held back)
+  👀 🔀 #3902 review requested 3d ago — haivo-outset is waiting
+  🤝 💬 You said "I'll take this" on the transcode thread 6d ago
 ```
 
-- Lead with **Urgent + High only**. Medium and Low are in the file; the digest
-  doesn't recite them.
-- **Aging**: anything untouched past ~10 days at High or above.
-- **Landed**: what auto-closed since last run — the "you made progress" line.
-- End with suggestions and the count held back.
+Lead with **Urgent + High**. Medium and Low live in the document; the digest
+doesn't recite them.
 
-Don't post the digest anywhere. It's for Daniel. If he wants it in Slack, route it
-through `slack-post`.
+**If a connector's token has gone stale, say so loudly at the top.** A digest
+silently missing its Linear and Slack halves looks like a quiet day.
 
-## Running it daily
+Don't post the digest anywhere. If he wants it in Slack, route it through
+`slack-post`.
 
-`/todo` on demand works. For the automatic morning surface, the two options differ
-in what they cost:
+## Other modes
 
-- **A scheduled cloud routine** (the `schedule` skill) — runs without a session
-  held open. Preferred.
-- **`CronCreate` in a long-running local session** — works, but only fires while a
-  Claude session is open and idle, and a long-lived session accumulates context.
-  That's what makes `oncall-autopilot` expensive; don't repeat it here. If it must
-  be local, run it as a fresh short session per day, not a standing one.
+- **`add <text>`** — into the section he names, else 🟡 Medium. Fill in source icon,
+  the one-sentence why, and links from context.
+- **`bump <title> <priority>`** — move between sections. Nothing else changes.
+- **`drop <title>`** — move to **Not doing** with his reason and the date.
+- **`suggest`** — suggestion pass only, no clearing or digest.
