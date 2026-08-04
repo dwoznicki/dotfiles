@@ -24,6 +24,19 @@ Every run also writes **`~/.claude/daily-todo/YYYY-MM-DD.md`** — the long vers
 behind the short Notion list: why each item matters, the evidence, what's already
 been ruled out, durable facts worth not re-deriving, and open questions.
 
+**The filename date is Pacific, not UTC** — it's Daniel's day that matters. The
+09:00 PT scheduled run has the two agree, but a manual run after 17:00 PT does not,
+and naming that file with tomorrow's UTC date makes `--load` miss it. Get it from
+`TZ=America/Los_Angeles date +%F`, never from `date -u`.
+
+**Datestamp both surfaces every run**, so a stale page is obvious at a glance:
+
+- **Memory file** — a `**Generated** <YYYY-MM-DD HH:MM PDT> (<ISO UTC>)` line under
+  the H1, plus whether the run was scheduled or manual.
+- **Notion page** — a first line carrying a native date mention and a pointer to
+  that day's memory file:
+  `**Updated** <mention-date start="2026-08-03" startTime="22:12" timeZone="America/Los_Angeles"/> · memory: \`~/.claude/daily-todo/2026-08-03.md\``
+
 Deliberately **not** in the standard memory directory
 (`~/.claude/projects/*/memory/`) — that's for small single-fact files loaded into
 every session. This is a verbose per-day working record, loaded only on request.
@@ -161,11 +174,19 @@ skill's job is only to make sure nothing reaches him unnoticed.
 
 **GitHub** — the gap `pr-drain` doesn't cover:
 
-- **Review requests on him** — `gh pr list --search "review-requested:@me" --state open`.
-  This is the big one: `pr-drain` only handles PRs he *authors*, so these are
-  invisible today and someone is blocked on every one → 👀. There were **25** when
-  this skill was written. Don't list 25 items; surface the **oldest few** and give
-  the total.
+- **Review requests on him** — the big one: `pr-drain` only handles PRs he *authors*,
+  so these are invisible otherwise and someone is blocked on every one → 👀. Running
+  at **28**, with a tail **17 days** deep.
+
+  **Sort by `updatedAt` explicitly** — GitHub's default order is not by age, and
+  reading it as though it were produced a wrong "oldest is 4d" once when the true
+  tail was 17 days:
+  ```bash
+  gh pr list --search "review-requested:@me" --state open --limit 60 \
+    --json number,author,updatedAt --jq 'sort_by(.updatedAt) | .[0:3]'
+  ```
+  Don't list all 28 — surface the **oldest few**, give the total, and flag 🕸 when
+  the tail is past 10 days.
 - His own PRs — read `pr-drain`'s ready-to-flip list and
   `~/.claude/pr-drain/needs-me.md`; don't re-derive them.
 
