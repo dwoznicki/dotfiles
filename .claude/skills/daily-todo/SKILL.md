@@ -48,6 +48,13 @@ Two rules that make it useful:
 - **Each day's file is a complete snapshot, not a delta.** Carry forward the full
   context of every still-open item, so loading any single date gives a whole picture
   without reading back through history. Verbose is fine — that's the point.
+- **Carry over from the most recent file, not from yesterday's date.** Days get
+  missed — weekends, PTO, a box that was down. Take the newest file present:
+  ```bash
+  ls -1 ~/.claude/daily-todo/*.md | sort | tail -1
+  ```
+  Never key the carry-over on `today - 1`; a Monday run would find nothing and
+  silently start from an empty list, losing every open item from Friday.
 - **Record what you couldn't determine, not just what you found.** "I did not query
   the blast radius" and "the log can't distinguish these two causes" are the most
   valuable lines in the file, because they stop the next session from mistaking an
@@ -143,10 +150,21 @@ In order:
 **1. Read the page first.** Always. His edits are the source of truth; never
 regenerate from memory.
 
-**2. Clear what's checked.** Every `- [x]` item is **removed**, children and all.
-Checked items do not survive to the next day — that's the point, the page only ever
-shows live work. Report what you cleared in the digest so there's one moment of
-visibility before it's gone.
+**2. Carry over the unfinished; drop the checked.** This is the core of the daily
+cycle:
+
+- **Every `- [ ]` item carries over** — untouched. Same section, same wording, same
+  links; only its age advances. An open item survives indefinitely until he checks it
+  or drops it, however many days pass.
+- **Every `- [x]` item is removed**, children and all, and is **not** carried into the
+  new memory file. Checked means finished; it doesn't survive to the next day. That's
+  what keeps the page showing only live work.
+- **A missed day changes nothing.** Carry over from the most recent state — the Notion
+  page (which is a single living page, so it already persists) and the newest memory
+  file, whatever its date. Never assume the previous file is yesterday's.
+
+Report what you cleared in the digest, so there's one moment of visibility before it's
+gone for good.
 
 **3. Auto-check what landed.** Flip to `- [x]`, add 🤖, so tomorrow's run clears it:
 
