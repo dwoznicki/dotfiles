@@ -1,8 +1,8 @@
 ---
-name: todo
-description: Daniel's daily priority list, stored on the private Notion page "🪢 Daily sched". Clears items he checked off, auto-checks work that landed (PR merged, review submitted, issue Done), refreshes ages, and suggests new items from Linear, GitHub, and Slack — including review requests waiting on him and commitments he made in threads. Priorities are his; the skill never re-ranks. Use for "todo", "what should I work on", "my list", "add to my todo", "bump X", or the daily morning run.
+name: daily-todo
+description: Daniel's daily priority list, stored on the private Notion page "🪢 Daily sched" and backed by a verbose per-day memory file. Clears items he checked off, auto-checks work that landed (PR merged, review submitted, issue Done), refreshes ages, and suggests new items from Linear, GitHub, and Slack — including review requests waiting on him and commitments he made in threads. `--load` pulls today's memory into the session so he can discuss it. Priorities are his; the skill never re-ranks. Use for "todo", "what should I work on", "my list", "add to my todo", "bump X", "load my todo context", or the daily morning run.
 user_invocable: true
-argument-hint: "[digest | add <text> | bump <title> <urgent|high|medium|low> | drop <title> | suggest]"
+argument-hint: "[digest | --load [date] | add <text> | bump <title> <urgent|high|medium|low> | drop <title> | suggest]"
 ---
 
 # TODO
@@ -17,6 +17,30 @@ The private Notion page **`🪢 Daily sched`** —
 
 Top-level page, no parent, outside any database. Read it with
 `notion-fetch`; write with `notion-update-page`.
+
+## The memory file
+
+Every run also writes **`~/.claude/daily-todo/YYYY-MM-DD.md`** — the long version
+behind the short Notion list: why each item matters, the evidence, what's already
+been ruled out, durable facts worth not re-deriving, and open questions.
+
+Deliberately **not** in the standard memory directory
+(`~/.claude/projects/*/memory/`) — that's for small single-fact files loaded into
+every session. This is a verbose per-day working record, loaded only on request.
+Deliberately **not** in the dotfiles repo either: that repo is public and this file
+names customers.
+
+Two rules that make it useful:
+
+- **Each day's file is a complete snapshot, not a delta.** Carry forward the full
+  context of every still-open item, so loading any single date gives a whole picture
+  without reading back through history. Verbose is fine — that's the point.
+- **Record what you couldn't determine, not just what you found.** "I did not query
+  the blast radius" and "the log can't distinguish these two causes" are the most
+  valuable lines in the file, because they stop the next session from mistaking an
+  unchecked assumption for a settled fact.
+
+Write it *after* the Notion update, so the file reflects the state the page ended in.
 
 **Prefer `update_content`** (search-and-replace pairs) over `replace_content` —
 flipping one checkbox shouldn't rewrite the page and risk clobbering an edit he
@@ -190,6 +214,26 @@ and Slack halves looks like a quiet day.
 
 Don't post the digest anywhere else. If he wants it in Slack, route it through
 `slack-post`.
+
+## `--load` — pull today's context into the session
+
+For when he wants to *talk* about the list rather than read it. Read-only: no Notion
+write, no suggestion pass, no clearing.
+
+1. Read `~/.claude/daily-todo/<today>.md`.
+2. **If today's file doesn't exist** (before the morning run, or a non-weekday),
+   fall back to the most recent file present — and **say which date you loaded**.
+   Silently serving stale context as today's is the failure mode here.
+3. Also read the Notion page, so the live checkbox state is current — he may have
+   ticked things since the file was written.
+4. Summarise in a few lines: what's open, what changed since the file was written,
+   and any **open questions** the file records. Then stop and let him drive.
+
+`--load <date>` loads a specific day (`--load 2026-08-01`) for looking back.
+
+If the two disagree — an item checked off in Notion that the file still describes as
+open — **trust Notion** for state and the file for context, and point out the
+divergence rather than quietly reconciling it.
 
 ## Other modes
 
