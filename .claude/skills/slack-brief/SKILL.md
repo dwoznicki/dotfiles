@@ -13,7 +13,7 @@ write-up posted where a 5-line answer belonged.
 
 ## Who reads these
 
-Colleagues at Outset — PMs, CS, designers, leadership, engineers. They are
+Your colleagues — PMs, CS, designers, leadership, engineers. They are
 **data-oriented but not all programmers**. That cuts both ways:
 
 - **Give them numbers.** How many users, studies, orgs, over what window. They
@@ -27,12 +27,13 @@ investigation that produced it.
 ## Workflow
 
 1. **Compose** the message per the rules below.
-2. **Show it in the conversation** and stop. Let Daniel read it.
+2. **Show it in the conversation** and stop, so the user can read it first.
 3. **Post only on confirmation** — with `mcp__claude_ai_Slack__slack_send_message`.
-   Use `slack_send_message_draft` if he wants it parked in Slack instead.
+   Use `slack_send_message_draft` to park it in Slack for editing instead.
 
-Skip the review gate only when `--post` was passed or he already said "post it".
-Posting is outward-facing and effectively irreversible — when in doubt, show first.
+Skip the review gate only when `--post` was passed or the user already said "post
+it". Posting is outward-facing and effectively irreversible — when in doubt, show
+first.
 
 If given a thread URL, reply **in the thread** (`thread_ts` = the parent's ts from
 the URL's `p1784…` → `1784….######`). Don't start a new channel message. Use
@@ -156,4 +157,4 @@ sentence, the query technique is gone entirely, and it ends with a specific ask.
 
 ## Report
 
-After posting, give Daniel the message permalink. Don't re-paste the body.
+After posting, return the message permalink. Don't re-paste the body.
