@@ -1,6 +1,6 @@
 ---
 name: investigate
-description: Investigate a reported issue from a Slack thread, Sentry issue, or Linear ticket — reads the source, checks whether it's already known, right-sizes the investigation, and reports back through slack-post. Use whenever handed a Slack thread URL with "please investigate", "is this serious?", "what's your read?", "let's debug this", "is this a known issue?", or "why is X stuck?".
+description: Investigate a reported issue from a Slack thread, Sentry issue, or Linear ticket — reads the source, checks whether it's already known, right-sizes the investigation, and reports back through slack-brief. Use whenever handed a Slack thread URL with "please investigate", "is this serious?", "what's your read?", "let's debug this", "is this a known issue?", or "why is X stuck?".
 user_invocable: true
 argument-hint: "<slack-thread-url | sentry-url | OUT-####> [the question] [--post]"
 ---
@@ -13,7 +13,7 @@ task Daniel hands over. It does three things the underlying skills don't:
 1. **Extracts the context from the source** instead of asking for it.
 2. **Right-sizes the work** — most of these need a 5-minute answer, not a full
    production triage.
-3. **Reports back through `slack-post`**, so the write-up is short and readable.
+3. **Reports back through `slack-brief`**, so the write-up is short and readable.
 
 It composes existing skills; it does not reimplement them. **`oncall-triage` is the
 general fallback, not the default** — check the specialist table in Step 3 first.
@@ -21,7 +21,7 @@ A specialist already knows the tables, the failure modes, and the queries for it
 subsystem; reaching for `oncall-triage` when one applies means re-deriving all of
 that by hand.
 
-- **`slack-post`** owns anything posted to Slack. Always.
+- **`slack-brief`** owns anything posted to Slack. Always.
 - **`code-owners`** answers "who should pick this up?".
 - **`cs-bug-summary`** produces the CS/customer-facing version.
 
@@ -142,13 +142,13 @@ synthetic placeholders.
 **In the conversation**, give Daniel the answer directly: what's happening, how
 bad, what to do. This part can be technical — he's the audience.
 
-**For Slack, always go through `slack-post`** (`Skill(skill="slack-post")`) — pass
+**For Slack, always go through `slack-brief`** (`Skill(skill="slack-brief")`) — pass
 it the thread URL so it replies in-thread, plus the findings. That skill owns
 length, structure, plain language, and Slack's markdown quirks. Do not hand-write
 the Slack message here, and do not paste the conversation write-up into Slack —
 it's calibrated for Daniel, not for the thread.
 
-Post only when Daniel asks, or confirms the draft. `slack-post` drafts for review
+Post only when Daniel asks, or confirms the draft. `slack-brief` drafts for review
 by default; `--post` on this skill passes through.
 
 Then, when they apply:

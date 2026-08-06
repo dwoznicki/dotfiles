@@ -188,7 +188,7 @@ passes and accumulate an age. Each pass: add new, drop resolved, age the rest.
 5. **Mergeable now** — **never merge.** Report and let Daniel do it.
 
 Don't post any of this to Slack or the PRs. If he wants it in Slack, route it
-through `slack-post`.
+through `slack-brief`.
 
 ## On a loop
 

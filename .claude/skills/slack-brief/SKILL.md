@@ -1,11 +1,11 @@
 ---
-name: slack-post
+name: slack-brief
 description: Write and post a Slack message that busy colleagues will actually read — short, plain-language, structured, impact-first. Use whenever posting findings, an investigation result, a status update, or a bug explanation to a Slack channel, thread, or DM. Drafts for review before sending.
 user_invocable: true
 argument-hint: "<channel | thread-url | @person> [what to say] [--post]"
 ---
 
-# Slack post
+# Slack brief
 
 Turn findings into a message a busy person reads in 15 seconds. The default
 failure mode this skill exists to prevent: a 4,000-character investigation

@@ -252,7 +252,7 @@ on the page and as the first line of stdout. A digest silently missing its Linea
 and Slack halves looks like a quiet day.
 
 Don't post the digest anywhere else. If he wants it in Slack, route it through
-`slack-post`.
+`slack-brief`.
 
 ## `--load` — pull today's context into the session
 
