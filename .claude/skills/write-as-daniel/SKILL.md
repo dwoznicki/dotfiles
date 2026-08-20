@@ -87,12 +87,6 @@ Plain and direct, conversational without being chatty. Specifics:
   decide whether your changes belong in the base spec"*, *"That said, I doubt
   anyone would say AI is at a point where we're comfortable with..."*. He owns an
   opinion in the first person rather than hiding it behind the team.
-- **Argue a goal with a concrete story, not an abstract claim.** The rollout
-  proposal's long-term goals are three present-tense narratives with invented
-  props: a `cool_thing` module missing a database index, a paginated endpoint
-  the frontend only reads the first page of, and a future Anthropic model called
-  "Magnum Opus 8". Specificity is doing the persuading, and the invented names
-  carry the humor.
 - **Short declaratives.** One idea per sentence. If a sentence has two commas
   and a subordinate clause, split it.
 - **Dry asides are in character**, sparingly: "kinda clunky", "Looks cool, but
