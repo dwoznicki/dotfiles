@@ -55,8 +55,26 @@ reach for a dash.
   drafted for him.
 - Numbered lists for anything sequenced or countable ("The four jobs", a quick
   reference). Bulleted lists for everything else.
-- Bulleted items lead with a **bold label, colon inside the bold, capital after**:
-  `- **REST and WebSocket routes:** One line per route in a plain code block.`
+- Bulleted items lead with a **short label, a colon, then the explanation**. How
+  the label is bolded varies and is not worth agonizing over. All three of these
+  are his:
+
+      - Ship fewer bugs: AI is all too happy to implement without proper care.
+      - **Greenfield projects**: Medium-large, net new addition to our codebase.
+      - **REST and WebSocket routes:** One line per route in a plain code block.
+
+  Plain labels suit prose-heavy argument lists; bold suits reference material a
+  reader scans for one row.
+- **Open a proposal with an unheaded paragraph**, two sentences, saying why now.
+  No "## Summary" above it. *"We've been experimenting with spec driven
+  development systems somewhat in isolation for a month or so now. It's time to
+  pool our learnings and build out our shared system."*
+- **Goals, then Non-goals.** Non-goals is where he defuses the objections he
+  expects, before anyone raises them: dogmatic enforcement, a perfect plan, full
+  coverage on day one.
+- **A blockquote holds a worked example of a proposed process**, introduced by
+  something like "One possible system:". It keeps an illustration visibly
+  separate from the rule it illustrates.
 - End a proposal with a section that names what is still unresolved. He calls it
   **Missing pieces**. Do not pretend completeness.
 
@@ -64,9 +82,17 @@ reach for a dash.
 
 Plain and direct, conversational without being chatty. Specifics:
 
-- **"We" for team norms, "you" for instructions.** *"We're trying to associate
-  each spec file with a module"* but *"It's up to you to decide whether your
-  changes belong in the base spec."*
+- **"We" for team norms, "you" for instructions, "I" for his own judgment.**
+  *"We're trying to associate each spec file with a module"*, *"It's up to you to
+  decide whether your changes belong in the base spec"*, *"That said, I doubt
+  anyone would say AI is at a point where we're comfortable with..."*. He owns an
+  opinion in the first person rather than hiding it behind the team.
+- **Argue a goal with a concrete story, not an abstract claim.** The rollout
+  proposal's long-term goals are three present-tense narratives with invented
+  props: a `cool_thing` module missing a database index, a paginated endpoint
+  the frontend only reads the first page of, and a future Anthropic model called
+  "Magnum Opus 8". Specificity is doing the persuading, and the invented names
+  carry the humor.
 - **Short declaratives.** One idea per sentence. If a sentence has two commas
   and a subordinate clause, split it.
 - **Dry asides are in character**, sparingly: "kinda clunky", "Looks cool, but
