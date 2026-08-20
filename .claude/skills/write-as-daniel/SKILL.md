@@ -37,13 +37,22 @@ reach for a dash.
 
 - `##` for top-level sections, `###` for subsections, `####` for individual
   named conventions or rules.
-- Open a section with **one sentence that defines the thing**, then stop. He
-  uses "In a sentence:" as an explicit device for this.
-- Follow the definition with an **italic clarifier** that heads off the obvious
-  misreading: *Settled, not finished*. *Accountable, not solely responsible*.
-- **Standalone italic lines** carry a principle that should be quotable on its
-  own: *Each code owner will be responsible for modularizing and speccing their
+- Open a section with **one sentence that defines the thing**, then stop.
+  "In a sentence:" ends its own line; the definition lands on the next line as a
+  **standalone italic sentence**, quotable on its own:
+
+  > Every project reaches a point where product and design hand the work to
+  > engineering. In a sentence:
+  > *Engineering should start scoping once the direction is settled and the
+  > designs aren't expected to change much.*
+
+- **Standalone italic lines** carry any principle meant to be quoted back:
+  *Each code owner will be responsible for modularizing and speccing their
   domain.*
+- **Do not add an italic clarifier** of the *X, not Y* form after a definition.
+  It reads like his, but it comes from the tech-lead section of "Project
+  Collaboration With Engineering", which he does not own. He deleted the one
+  drafted for him.
 - Numbered lists for anything sequenced or countable ("The four jobs", a quick
   reference). Bulleted lists for everything else.
 - Bulleted items lead with a **bold label, colon inside the bold, capital after**:
@@ -67,6 +76,14 @@ Plain and direct, conversational without being chatty. Specifics:
 - An exclamation mark is allowed, about once per doc: *"Don't simply accept all
   its recommendations!"*
 - **Contractions throughout.** "don't", "it's", "we're".
+- **Frame a rule around what the reader should do, not what another team owes.**
+  "Engineering should start scoping once the direction is settled" replaced
+  "product and design hand over once the direction is settled". Same trigger, no
+  finger pointing at the other function. He also cut the contrastive jab that
+  followed it ("not when they're pixel-final").
+- **Plain repeated words beat elegant variation.** "Expect details to change
+  afterward, and expect engineering to ask questions that change them" replaced
+  a version that used "keep moving" and "move them" to avoid the repeat.
 
 ## What he cuts from a draft
 
@@ -81,6 +98,20 @@ highest-yield things to not write in the first place:
 - **Reassurance nobody asked for.** He deleted a whole paragraph reassuring
   readers that agents would do the drafting work.
 - **Explaining the obvious consequence.** State the rule, trust the reader.
+- **Rhetorical flourishes.** He deleted the parallel pair "None of that needs
+  final pixels. All of it needs settled direction." Make the point once.
+- **Consequence clauses that editorialize.** "It moves the same scoping work into
+  whatever days are left, which is how a project ends up with its plan written
+  under deadline" became "It shifts out the scoping work by however many days are
+  needed to finalize." Give the mechanism, skip the moral.
+- **Over-prescription.** "Direction, not deliverables. Enough for engineering to
+  size the work and find the risk:" became "This will be case-by-case, but
+  direction is usually enough." He leaves room for judgment where a rule would
+  be brittle.
+- **Whole sections that over-elaborate**, however well argued. A per-scale
+  breakdown of when to hand off (Planet / Country / City, one bullet each) was
+  cut outright; a single clause referencing the scale survived in the prose
+  above it. If the point is already made, the section is padding.
 
 ## Examples: the ✅ / ❌ block
 
