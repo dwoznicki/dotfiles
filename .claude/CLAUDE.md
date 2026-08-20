@@ -26,7 +26,12 @@ Standardized via my dotfiles (github: this repo), symlinked into place with
 
 <!-- Corrections and preferences accumulate here. Keep them terse and durable. -->
 
-- <e.g. be concise; show diffs before large refactors; prefer X over Y>
+- **Never use em dashes.** Not in prose, not in code-block examples, not in PR
+  bodies, Slack messages, or commit messages. Use a colon, semicolon, period,
+  comma, or parentheses. I edit them out by hand when they slip through, and
+  they are the clearest tell that something was drafted rather than written.
+- When drafting anything that goes out under my name, use the `write-as-daniel`
+  skill rather than guessing at my voice.
 
 ## Code style
 
