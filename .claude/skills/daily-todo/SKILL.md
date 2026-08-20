@@ -194,17 +194,33 @@ skill's job is only to make sure nothing reaches him unnoticed.
 
 - **Review requests on him** — the big one: `pr-drain` only handles PRs he *authors*,
   so these are invisible otherwise and someone is blocked on every one → 👀. Running
-  at **28**, with a tail **17 days** deep.
+  at **16**, of which ~5 name him as the only reviewer.
+
+  **Use `user-review-requested:@me`, never `review-requested:@me`.** They are not
+  synonyms: `review-requested:` also matches every PR routed to a *team* he belongs
+  to, and he is a maintainer of `Outset-AI/backend`, which alone carries ≈46 open
+  PRs. That one wrong qualifier inflated this item from **16 to 54** and went
+  uncorrected for weeks — every count in the historical series (25, 28, 30, 31, 36,
+  43…) measured the wrong set, along with the "4 are dependabot" and "oldest is
+  #4247" claims derived from it. A team request is not a personal backlog: any of
+  15 maintainers can satisfy it, and doing so silently drops him from it.
 
   **Sort by `updatedAt` explicitly** — GitHub's default order is not by age, and
   reading it as though it were produced a wrong "oldest is 4d" once when the true
   tail was 17 days:
   ```bash
-  gh pr list --search "review-requested:@me" --state open --limit 60 \
+  gh pr list --search "user-review-requested:@me" --state open --limit 60 \
     --json number,author,updatedAt --jq 'sort_by(.updatedAt) | .[0:3]'
   ```
-  Don't list all 28 — surface the **oldest few**, give the total, and flag 🕸 when
+  Don't list all 16 — surface the **oldest few**, give the total, and flag 🕸 when
   the tail is past 10 days.
+
+  **Count sole-reviewer PRs separately** — the ones nobody else can unblock, and the
+  only tier that is unambiguously his:
+  ```bash
+  gh pr list --search "user-review-requested:@me" --state open --limit 100 \
+    --json number,reviewRequests --jq '[.[] | select((.reviewRequests|length)==1)] | length'
+  ```
 - His own PRs — read `pr-drain`'s ready-to-flip list and
   `~/.claude/pr-drain/needs-me.md`; don't re-derive them.
 
