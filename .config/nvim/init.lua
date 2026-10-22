@@ -129,6 +129,7 @@ table.insert(plugins, {
     },
   },
   config = function()
+    local ts_pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook()
     require("Comment").setup({
       toggler = {
         line = "rr",
@@ -141,7 +142,12 @@ table.insert(plugins, {
       mappings = {
         extra = false,
       },
-      pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
+      -- Fall back to 'commentstring' when there's no treesitter parser (e.g. zsh). Otherwise
+      -- Comment.nvim tries its own treesitter lookup, which crashes on Neovim 0.12 because
+      -- get_parser() now returns nil instead of erroring.
+      pre_hook = function(ctx)
+        return ts_pre_hook(ctx) or vim.bo.commentstring
+      end,
     })
   end,
 })
@@ -335,32 +341,33 @@ table.insert(plugins, {
 -- #Treesitter plugins
 table.insert(plugins, {
   "nvim-treesitter/nvim-treesitter",
-  branch = "master",
+  branch = "main",
   build = ":TSUpdate",
-  event = {"BufReadPost", "BufNewFile"},
+  -- The main branch doesn't support lazy-loading.
+  lazy = false,
   config = function()
-    require("nvim-treesitter.configs").setup({
-      -- ipkg's upstream repo (srghma/tree-sitter-ipkg) is gone (404), so its
-      -- "download" writes a "Not Found" page that tar chokes on. Skip it.
-      ignore_install = {"help", "ipkg"},
-      ensure_installed = "all",
-      highlight = {
-        enable = true,
-      },
-      indent = {
-        enable = true,
-        disable = {"tsx"},
-      },
-      incremental_selection = {
-        enable = true,
-        keymaps = {
-          init_selection = "<leader>=",
-          node_incremental = "<leader>=",
-          scope_incremental = false,
-          node_decremental = "<leader>-",
-        },
-      },
+    -- Building parsers needs the tree-sitter CLI (`brew install tree-sitter-cli`). This is a
+    -- no-op for parsers that are already installed.
+    require("nvim-treesitter").install({"stable", "unstable"})
+
+    -- Highlighting and indentation are no longer modules; turn them on per buffer for any
+    -- filetype that has a parser.
+    vim.api.nvim_create_autocmd("FileType", {
+      group = vim.api.nvim_create_augroup("treesitter_start", {clear = true}),
+      callback = function(event)
+        if not pcall(vim.treesitter.start, event.buf) then
+          return
+        end
+        if event.match ~= "typescriptreact" then
+          vim.bo[event.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+      end,
     })
+
+    -- Incremental selection is built into Neovim now (`an`/`in` in visual mode).
+    vim.keymap.set("n", "<leader>=", "van", {remap = true, desc = "Select treesitter node"})
+    vim.keymap.set("x", "<leader>=", "an", {remap = true, desc = "Select parent treesitter node"})
+    vim.keymap.set("x", "<leader>-", "in", {remap = true, desc = "Select child treesitter node"})
   end,
 })
 table.insert(plugins, {
@@ -384,43 +391,39 @@ table.insert(plugins, {
 })
 table.insert(plugins, {
   "nvim-treesitter/nvim-treesitter-textobjects",
-  branch = "master",
+  branch = "main",
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
   },
   event = "VeryLazy",
   config = function()
-    require("nvim-treesitter.configs").setup({
-      textobjects = {
-        select = {
-          enable = true,
-          -- Automatically jump forward to textobject.
-          lookahead = true,
-          keymaps = {
-            ["af"] = {query = "@function.outer", desc = "outer function/method"},
-            ["if"] = {query = "@function.inner", desc = "inner function/method"},
-            ["ai"] = {query = "@conditional.outer", desc = "outer conditional"},
-            ["ii"] = {query = "@conditional.inner", desc = "inner conditional"},
-            ["al"] = {query = "@loop.outer", desc = "outer loop"},
-            ["il"] = {query = "@loop.inner", desc = "inner loop"},
-            ["ac"] = {query = "@comment.outer", desc = "outer comment"},
-            ["ic"] = {query = "@comment.inner", desc = "inner comment"},
-            ["aC"] = {query = "@class.outer", desc = "outer class"},
-            ["iC"] = {query = "@class.inner", desc = "inner class"},
-          },
-          selection_modes = function()
-            return "V"
-          end,
-        },
-        lsp_interop = {
-          enable = true,
-          peek_definition_code = {
-            ["<leader>kf"] = "@function.outer",
-            ["<leader>kc"] = "@class.outer",
-          },
-        },
+    require("nvim-treesitter-textobjects").setup({
+      select = {
+        -- Automatically jump forward to textobject.
+        lookahead = true,
+        selection_modes = function()
+          return "V"
+        end,
       },
     })
+
+    local textobjects = {
+      ["af"] = {query = "@function.outer", desc = "outer function/method"},
+      ["if"] = {query = "@function.inner", desc = "inner function/method"},
+      ["ai"] = {query = "@conditional.outer", desc = "outer conditional"},
+      ["ii"] = {query = "@conditional.inner", desc = "inner conditional"},
+      ["al"] = {query = "@loop.outer", desc = "outer loop"},
+      ["il"] = {query = "@loop.inner", desc = "inner loop"},
+      ["ac"] = {query = "@comment.outer", desc = "outer comment"},
+      ["ic"] = {query = "@comment.inner", desc = "inner comment"},
+      ["aC"] = {query = "@class.outer", desc = "outer class"},
+      ["iC"] = {query = "@class.inner", desc = "inner class"},
+    }
+    for keys, textobject in pairs(textobjects) do
+      vim.keymap.set({"x", "o"}, keys, function()
+        require("nvim-treesitter-textobjects.select").select_textobject(textobject.query, "textobjects")
+      end, {desc = textobject.desc})
+    end
   end
 })
 

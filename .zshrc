@@ -50,7 +50,7 @@ if [ $? -eq 0 ]; then
     source <(fzf --zsh)
 fi
 
-. "$HOME/.local/bin/env"
+# . "$HOME/.local/bin/env"
 
 setopt share_history
 HISTSIZE=10000

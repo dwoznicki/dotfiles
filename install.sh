@@ -42,10 +42,3 @@ starship --version
 if [ $? -ne 0 ]; then
     curl -sS https://starship.rs/install.sh | sh
 fi
-
-# Install nvm, a node.js version manager.
-# https://github.com/nvm-sh/nvm
-nvm --version
-if [ $? -ne 0 ]; then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-fi
